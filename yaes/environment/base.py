@@ -18,9 +18,12 @@ class Environment:
         try:
             self.state, self.reward, self.done, self.info = self.gym_env.step(action)
         except Exception as e:
-            print(action)
-            print(self.gym_env.step(action))
-            raise e
+            try:
+                self.state, self.reward, self.done, _, self.info = self.gym_env.step(action)
+            except Exception as e:
+                print(action)
+                print(self.gym_env.step(action))
+                raise e
 
         return self.state, self.reward, self.done, self.info
 
