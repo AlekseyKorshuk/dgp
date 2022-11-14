@@ -19,5 +19,4 @@ rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(10000), "progr
 es_agent = Agent(env)
 stats = evaluator.evaluate([Agent, rl_agent])
 print(stats)
-env.play(stats[1]["best_agent"] ,render=True)
-
+env.play(stats[1]["best_agent"], render=True)
