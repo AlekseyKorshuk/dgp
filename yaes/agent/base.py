@@ -1,11 +1,13 @@
 import random
+from yaes.environment import Environment
 
 
 class Agent:
-    def __init__(self, num_states, num_actions, is_discrete=True):
-        self.num_states = num_states
-        self.num_actions = num_actions
-        self.is_discrete = is_discrete
+    def __init__(self, env: Environment):
+        self.env = env
+        self.num_states = self.env.get_observation_space()
+        self.num_actions = self.env.get_action_space()
+        self.is_discrete = self.env.is_discrete()
 
     def predict(self, state):
         if self.is_discrete:

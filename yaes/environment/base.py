@@ -56,3 +56,12 @@ class Environment:
 
     def get_elapsed_steps(self):
         return self.gym_env._elapsed_steps
+
+    def get_observation_space(self):
+        return self.gym_env.observation_space.shape[0]
+
+    def get_action_space(self):
+        return self.gym_env.action_space.n
+
+    def is_discrete(self):
+        return True
