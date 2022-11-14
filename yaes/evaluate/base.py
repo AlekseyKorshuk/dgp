@@ -8,13 +8,15 @@ class Evaluator:
         self.env.reset()
 
     def evaluate(self, agents):
-        stats = dict()
+        stats = []
         for agent_class in agents:
             trainer = Trainer(self.env, agent_class)
             best_agent, training_stats, eval_stats = trainer.train()
-            stats[agent_class] = {
-                "training_stats": training_stats,
-                "eval_stats": eval_stats,
-                "best_agent": best_agent,
-            }
+            stats.append(
+                {
+                    "training_stats": training_stats,
+                    "eval_stats": eval_stats,
+                    "best_agent": best_agent,
+                }
+            )
         return stats
