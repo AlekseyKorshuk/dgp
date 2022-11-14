@@ -12,13 +12,12 @@ env = Environment(gym_env)
 print(env.get_observation_space())
 print(env.get_action_space())
 
-# # Evaluate the agents
-# evaluator = Evaluator(env)
-# # rl_agent = RLAgent(env, DQN, "MlpPolicy", {"total_timesteps": int(2e5), "progress_bar": True}, verbose=1)
-# rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(10000), "progress_bar": True}, verbose=1)
-# es_agent = Agent(env)
-# stats = evaluator.evaluate([Agent, rl_agent])
-# print(stats)
-# env.play(stats[1]["best_agent"] ,render=True)
-# # .play(env, render=True)
+# Evaluate the agents
+evaluator = Evaluator(env)
+# rl_agent = RLAgent(env, DQN, "MlpPolicy", {"total_timesteps": int(2e5), "progress_bar": True}, verbose=1)
+rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(10000), "progress_bar": True}, verbose=1)
+es_agent = Agent(env)
+stats = evaluator.evaluate([Agent, rl_agent])
+print(stats)
+env.play(stats[1]["best_agent"] ,render=True)
 
