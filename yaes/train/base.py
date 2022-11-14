@@ -27,8 +27,7 @@ class Trainer:
         }
         self.env.reset()
         # TODO: Implement this method
-        best_agent = self.agent_class(self.env.gym_env.observation_space.shape[0], self.env.gym_env.action_space.n,
-                                      is_discrete=True)
+        best_agent = self.agent_class(self.env)
         eval_stats = self.evaluate(best_agent, num_episodes=100)
         return best_agent, training_stats, eval_stats
 
