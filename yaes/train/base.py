@@ -26,8 +26,8 @@ class Trainer:
             "reward": 0,
         }
         self.env.reset()
+        best_agent = self.agent_class.train()
         # TODO: Implement this method
-        best_agent = self.agent_class(self.env)
         eval_stats = self.evaluate(best_agent, num_episodes=100)
         return best_agent, training_stats, eval_stats
 
