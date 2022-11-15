@@ -1,3 +1,6 @@
+import time
+
+
 class Environment:
     def __init__(self, gym_env):
         self.gym_env = gym_env
@@ -30,7 +33,7 @@ class Environment:
     def close(self):
         self.gym_env.close()
 
-    def play(self, agent_class, render=False):
+    def play(self, agent_class, render=False, sleep=1 / 30):
         if type(agent_class) == type:
             agent = agent_class(self.gym_env.observation_space.shape[0], self.gym_env.action_space.n,
                                 is_discrete=True)
@@ -44,6 +47,7 @@ class Environment:
             self.step(action)
             if render:
                 self.render()
+                time.sleep(sleep)
         return {
             "reward": self.reward,
             "steps": self.get_elapsed_steps(),
