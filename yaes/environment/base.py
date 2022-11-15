@@ -52,7 +52,12 @@ class Environment:
         }
 
     def get_elapsed_steps(self):
-        return self.gym_env._elapsed_steps
+        if "score" in self.info:
+            return self.info["score"]
+        try:
+            return self.gym_env._elapsed_steps
+        except:
+            return 0
 
     def get_observation_space(self):
         return self.gym_env.observation_space.shape[0]

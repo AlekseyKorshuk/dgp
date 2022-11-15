@@ -6,7 +6,9 @@ from yaes.environment import Environment
 from yaes.evaluate import Evaluator
 
 # First, we create our environment called LunarLander-v2
-gym_env = gym.make("CartPole-v1")
+import flappy_bird_gym
+gym_env = flappy_bird_gym.make("FlappyBird-v0")
+# gym_env = gym.make("CartPole-v1")
 # Then, we create our environment wrapper
 env = Environment(gym_env)
 print(env.get_observation_space())
