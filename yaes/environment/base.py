@@ -1,25 +1,29 @@
+import itertools
 import time
+
+import gym.spaces
+import numpy as np
 
 
 class Environment:
     def __init__(self, gym_env):
         self.gym_env = gym_env
-        self.state = self.gym_env.reset()
+        self.state_ = self.gym_env.reset()
         self.done = False
         self.reward = None
         self.info = None
 
     def reset(self):
-        self.state = self.gym_env.reset()
+        self.state_ = self.gym_env.reset()
         self.done = False
         self.reward = None
 
     def step(self, action):
         try:
-            self.state, self.reward, self.done, self.info = self.gym_env.step(action)
+            self.state_, self.reward, self.done, self.info = self.gym_env.step(action)
         except Exception as e:
             try:
-                self.state, self.reward, self.done, _, self.info = self.gym_env.step(action)
+                self.state_, self.reward, self.done, _, self.info = self.gym_env.step(action)
             except Exception as e:
                 print(action)
                 print(self.gym_env.step(action))
@@ -64,10 +68,23 @@ class Environment:
             return 0
 
     def get_observation_space(self):
-        return self.gym_env.observation_space.shape[0]
+        if type(self.gym_env.observation_space) == gym.spaces.Discrete:
+            return 1
+        return np.prod(self.gym_env.observation_space.shape)
 
     def get_action_space(self):
-        return self.gym_env.action_space.n
+        if type(self.gym_env.action_space) == gym.spaces.Discrete:
+            return self.gym_env.action_space.n
+        return self.gym_env.action_space.shape[0]
 
     def is_discrete(self):
         return True
+
+    @property
+    def state(self):
+        if type(self.gym_env.observation_space) == gym.spaces.Discrete:
+            return [self.state_]
+        state = np.concatenate(self.state_)
+        while len(state.shape) > 1:
+            state = np.concatenate(state)
+        return state

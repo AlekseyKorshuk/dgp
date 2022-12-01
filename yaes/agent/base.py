@@ -43,9 +43,12 @@ class AgentHelper:
 
     def predict(self, state):
         state = list(map(float, state))
+        # print(compile(self.func, self.pset)(*state))
+        # import pdb; pdb.set_trace()
+        # print()
         p = sigmoid(compile(self.func, self.pset)(*state))
 
-        return int(p.round())
+        return np.clip(int(p.round()), 0, 3)
 
 
 class Agent:
@@ -72,6 +75,12 @@ class Agent:
         self.toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
         self.toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
 
+        self.stats = tools.Statistics(lambda ind: ind.fitness.values)
+        self.stats.register("avg", np.mean, axis=0)
+        self.stats.register("std", np.std, axis=0)
+        self.stats.register("min", np.min, axis=0)
+        self.stats.register("max", np.max, axis=0)
+
     def predict(self, state):
         if self.is_discrete:
             action = random.randint(0, self.num_actions - 1)
@@ -82,13 +91,12 @@ class Agent:
     def _fitness(self, agent):
         result = self.env.play(AgentHelper(agent, self.pset), render=False)
         reward, steps = result['reward'], result['steps']
-
-        return steps,  #, steps
+        return reward,  #, steps
 
     def train(self):
-        pop = self.toolbox.population(n=300)
+        pop = self.toolbox.population(n=100)
         hof = tools.HallOfFame(1)
-        pop, log = algorithms.eaSimple(pop, self.toolbox, 0.5, 0.1, 10,
+        pop, log = algorithms.eaSimple(pop, self.toolbox, 0.5, 0.1, 10, stats=self.stats,
                                        halloffame=hof, verbose=True)
 
         print(hof[0])
