@@ -18,17 +18,21 @@ class Environment:
         self.done = False
         self.reward = None
 
+    def check_action(self, action):
+        pass
+
     def step(self, action):
+        self.check_action(action)
         try:
             self.state_, self.reward, self.done, self.info = self.gym_env.step(action)
         except Exception as e:
             try:
                 self.state_, self.reward, self.done, _, self.info = self.gym_env.step(action)
             except Exception as e:
-                print(action)
+                # print(action)
                 print(self.gym_env.step(action))
                 raise e
-
+        # print(self.state_, self.reward, self.done, self.info)
         return self.state, self.reward, self.done, self.info
 
     def render(self):
@@ -50,6 +54,7 @@ class Environment:
                 action = action[0]
             self.step(action)
             if render:
+                print(action)
                 self.render()
                 time.sleep(sleep)
         return {
@@ -84,6 +89,8 @@ class Environment:
     def state(self):
         if type(self.gym_env.observation_space) == gym.spaces.Discrete:
             return [self.state_]
+        if type(self.state_[0]) != list:
+            return self.state_
         state = np.concatenate(self.state_)
         while len(state.shape) > 1:
             state = np.concatenate(state)

@@ -47,8 +47,7 @@ class AgentHelper:
         # import pdb; pdb.set_trace()
         # print()
         p = sigmoid(compile(self.func, self.pset)(*state))
-
-        return np.clip(int(p.round()), 0, 3)
+        return int(p.round())
 
 
 class Agent:
@@ -90,11 +89,12 @@ class Agent:
 
     def _fitness(self, agent):
         result = self.env.play(AgentHelper(agent, self.pset), render=False)
+        # print(result)
         reward, steps = result['reward'], result['steps']
         return reward,  #, steps
 
     def train(self):
-        pop = self.toolbox.population(n=100)
+        pop = self.toolbox.population(n=150)
         hof = tools.HallOfFame(1)
         pop, log = algorithms.eaSimple(pop, self.toolbox, 0.5, 0.1, 10, stats=self.stats,
                                        halloffame=hof, verbose=True)
