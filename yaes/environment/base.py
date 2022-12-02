@@ -29,10 +29,8 @@ class Environment:
             try:
                 self.state_, self.reward, self.done, _, self.info = self.gym_env.step(action)
             except Exception as e:
-                # print(action)
                 print(self.gym_env.step(action))
                 raise e
-        # print(self.state_, self.reward, self.done, self.info)
         return self.state, self.reward, self.done, self.info
 
     def render(self):
@@ -95,3 +93,4 @@ class Environment:
         while len(state.shape) > 1:
             state = np.concatenate(state)
         return state
+
