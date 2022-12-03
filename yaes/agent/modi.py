@@ -1,34 +1,14 @@
-import random
-
 from yaes.environment import Environment
 from deap import gp
-from deap.gp import PrimitiveSetTyped, compile
+from deap.gp import compile
 from deap import creator, base, tools, algorithms
 import operator
 import numpy as np
-import random
-
-
-def if_then_else(input, output1, output2):
-    return output1 if input else output2
-
-
-def safe_div(x1, x2):
-    return 0 if x2 < 1e-15 else x1 / x2
+from .deap_primitives import basic_primitive_set
 
 
 def create_primitive_set(num_inputs, num_outputs):
-    pset = PrimitiveSetTyped("main", [float] * num_inputs, float)
-    pset.addPrimitive(operator.xor, [bool, bool], bool)
-    pset.addPrimitive(operator.mul, [float, float], float)
-    pset.addPrimitive(safe_div, [float, float], float)
-    pset.addPrimitive(operator.add, [float, float], float)
-    pset.addPrimitive(operator.sub, [float, float], float)
-
-    pset.addPrimitive(if_then_else, [bool, float, float], float)
-    # pset.addTerminal(3.0, float)
-    pset.addTerminal(1, bool)
-    pset.addEphemeralConstant('rn', lambda: random.uniform(-1, 1), float)
+    pset = basic_primitive_set(num_inputs, "modi_pset")
 
     for i in range(num_outputs):
         modi_i = gp.Modi(i)
@@ -37,41 +17,21 @@ def create_primitive_set(num_inputs, num_outputs):
     return pset
 
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-
 class AgentHelper:
-    def __init__(self, func, pset):
-        self.func = compile(func, pset)
-
-    def predict(self, state):
-        state = list(map(float, state))
-
-        p = np.argmax(self.func(*state))
-        return int(p)
-
-
-class ContinuousAgentHelper:
-    def __init__(self, func, pset, bounds):
+    def __init__(self, func, pset, bounds=None, is_continuous=False):
         self.func = compile(func, pset)
         self.bounds = bounds
+        self.is_continuous = is_continuous
 
     def predict(self, state):
-        # print(state)
         state = list(map(float, state))
-        # print(compile(self.func, self.pset)(*state))
-        # import pdb; pdb.set_trace()
-        # print()
         output = self.func(*state)
-        # print(output)
-        for i in range(len(output)):
-            data = np.clip(output[i], *self.bounds)
-            if type(data) == np.ndarray:
-                output[i] = float(data[0])
-            else:
-                output[i] = float(data)
-        # print(output)
+
+        if self.is_continuous and self.bounds is not None:
+            output = np.clip(output, *self.bounds).tolist()
+        else:
+            output = int(np.argmax(output))
+
         return output
 
 
@@ -106,46 +66,33 @@ class Agent:
         self.stats.register("min", np.min, axis=0)
         self.stats.register("max", np.max, axis=0)
 
-    def predict(self, state):
-        if self.is_discrete:
-            action = random.randint(0, self.num_actions - 1)
-        else:
-            action = random.uniform(0, 1)
-        return action
+        self.agent_helper = self._get_agent_helper()
 
-    def get_agent_helper(self):
+    def _get_agent_helper(self):
         if self.is_discrete:
-            return AgentHelper
+            return lambda func: AgentHelper(func, self.pset)
         else:
-            return ContinuousAgentHelper
-
-    def get_agent_args(self, agent):
-        if self.is_discrete:
-            return agent, self.pset
-        else:
-            return agent, self.pset, self.env.get_bounds()
+            return lambda func: AgentHelper(func, self.pset, bounds=self.env.get_bounds(), is_continuous=True)
 
     def _fitness(self, agent):
-        result = self.env.play(self.get_agent_helper()(*self.get_agent_args(agent)), render=False)
-        reward, steps = result['reward'], result['steps']
+        result = self.env.play(self.agent_helper(agent), render=False)
+        reward, steps = result["reward"], result["steps"]
         return reward,  # , steps
 
-    def train(self, ):
-        pop = self.toolbox.population(n=300)
+    def train(self, n_pop=300, cxpb=0.9, mutpb=0.5, n_gens=10):
+        pop = self.toolbox.population(n=n_pop)
         hof = tools.HallOfFame(1)
         log = None
         try:
-            pop, log = algorithms.eaSimple(pop, self.toolbox, 0.9, 0.5, 5, stats=self.stats,
-                                           halloffame=hof, verbose=True)
+            for _ in range(n_gens):
+                pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb, mutpb, ngen=0, stats=self.stats,
+                                               halloffame=hof, verbose=True)
+                min_fitness_index = np.argmin(list(map(self._fitness, pop)))
+                pop[min_fitness_index] = hof[0]
         except KeyboardInterrupt:
             pass
-
-        training_stats = {
-            "log": log,
-        }
-
-        print(hof[0])
-        if self.is_discrete:
-            return AgentHelper(hof[0], self.pset), training_stats
-        else:
-            return ContinuousAgentHelper(hof[0], self.pset, self.env.get_bounds()), training_stats
+        finally:
+            training_stats = {
+                "log": log,
+            }
+            return self.agent_helper(hof[0]), training_stats
