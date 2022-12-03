@@ -22,11 +22,8 @@ class Trainer:
         return best_agent, training_stats, eval_stats
 
     def train_ea(self):
-        training_stats = {
-            "reward": 0,
-        }
         self.env.reset()
-        best_agent = self.agent_class.train()
+        best_agent, training_stats = self.agent_class.train()
         # TODO: Implement this method
         eval_stats = self.evaluate(best_agent, num_episodes=1)
         return best_agent, training_stats, eval_stats

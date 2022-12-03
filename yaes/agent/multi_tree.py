@@ -150,6 +150,7 @@ class Agent:
         pops = [self.toolbox.population(n=300) for _ in range(self.num_actions)]
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 
+        log = None
         generations = 20
 
         try:
@@ -165,10 +166,14 @@ class Agent:
         for i in range(self.num_actions):
             print(i, individual[i])
 
+        training_stats = {
+            "log": log,
+        }
+
         if self.is_discrete:
-            return AgentHelper(individual, self.pset)
+            return AgentHelper(individual, self.pset), training_stats
         else:
-            return ContinuousAgentHelper(individual, self.pset, self.env.get_bounds())
+            return ContinuousAgentHelper(individual, self.pset, self.env.get_bounds()), training_stats
 
 
 # Re-write the eaSimple() function to evolve the 4 individuals w.r.t to the cost returned by the python function: cost_function
