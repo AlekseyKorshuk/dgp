@@ -63,14 +63,11 @@ def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose
         if not is_it_valid:
             invalid_ind.append(individ)
     invalid_ind = list(zip(*invalid_ind))
-        # invalid_ind.append([ind for ind in pop[i] if not ind.fitness.valid])
 
     fitnesses = toolbox.map(toolbox.evaluate, zip(*invalid_ind))
     fitnesses = list(fitnesses)
-    # print("len fitnesses", len(fitnesses), len(invalid_ind), fitnesses[0])
     for i in range(len(fitnesses)):
         for j in range(len(invalid_ind)):
-            # print(fitnesses[i])
             invalid_ind[j][i].fitness.values = fitnesses[i]
 
     for i in range(len(pop)):
@@ -97,19 +94,10 @@ def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose
                 invalid_ind.append(individ)
         invalid_ind = list(zip(*invalid_ind))
 
-        # print("len inds", [len(ind) for ind in invalid_ind])
-        # fitnesses = []
-        # for i in range(len(pop)):
-        #     fitnesses_ = toolbox.map(toolbox.evaluate, zip(*invalid_ind))
-        #     fitnesses.append(fitnesses_)
-        #     for ind, fit in zip(invalid_ind[i], fitnesses[i]):
-        #         ind.fitness.values = fit
         fitnesses = toolbox.map(toolbox.evaluate, zip(*invalid_ind))
         fitnesses = list(fitnesses)
-        # print("len fitnesses", len(fitnesses), len(invalid_ind), fitnesses[0])
         for i in range(len(fitnesses)):
             for j in range(len(invalid_ind)):
-                # print(fitnesses[i])
                 invalid_ind[j][i].fitness.values = fitnesses[i]
 
         for i in range(len(pop)):
@@ -125,7 +113,6 @@ def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose
         logbook.record(gen=0, nevals=nevals, **record)
 
         if verbose:
-            # print(logbooks[0].stream)
             print(*logbook, sep='\n')
 
     pop = [pop[i] for i in range(len(pop))]

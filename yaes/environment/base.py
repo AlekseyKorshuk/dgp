@@ -72,9 +72,8 @@ class Environment:
             action = self.gym_env.action_space.sample()
             if type(action) == tuple:
                 action = action[0]
-            data = self.step(action)
+            self.step(action)
             if render:
-                print("here", action, (self.done or self.truncated))
                 self.render()
                 time.sleep(sleep)
 
