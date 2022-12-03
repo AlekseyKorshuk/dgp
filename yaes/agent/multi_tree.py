@@ -1,179 +1,56 @@
-import random
 from yaes.environment import Environment
-from deap import gp
-from deap.gp import PrimitiveSetTyped, compile
-from deap import creator, base, tools, algorithms
-import operator
+from deap import tools
+from .deap_primitives import basic_primitive_set
+from .base import Agent
+from deap.gp import compile
 import numpy as np
-import random
+from deap import algorithms
 
 
-def if_then_else(input, output1, output2):
-    return output1 if input else output2
+def get_scores(agent):
+    return lambda *state: list(map(lambda func: func(*state), agent))
 
 
-def safe_div(x1, x2):
-    return 0 if x2 < 1e-15 else x1 / x2
-
-
-def create_primitive_set(num_inputs):
-    pset = PrimitiveSetTyped("main", [float] * num_inputs, float)
-    pset.addPrimitive(operator.xor, [bool, bool], bool)
-    pset.addPrimitive(operator.mul, [float, float], float)
-    pset.addPrimitive(safe_div, [float, float], float)
-    pset.addPrimitive(operator.add, [float, float], float)
-    pset.addPrimitive(operator.sub, [float, float], float)
-
-    pset.addPrimitive(if_then_else, [bool, float, float], float)
-    # pset.addTerminal(3.0, float)
-    pset.addTerminal(1, bool)
-    pset.addEphemeralConstant('rn', lambda: random.uniform(-1, 1), float)
-
-    return pset
-
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-
-sigmoid_v = np.vectorize(sigmoid)
-
-
-class AgentHelper:
-    def __init__(self, func, pset):
-        self.func = [compile(func_, pset) for func_ in func]
-
-    def predict(self, state):
-        # print(state)
-        state = list(map(float, state))
-        # print(compile(self.func, self.pset)(*state))
-        # import pdb; pdb.set_trace()
-        # print()
-        output = [func_(*state) for func_ in self.func]
-        p = sigmoid_v(output)
-        p = p.argmax()
-        return int(p.round())
-
-
-class ContinuousAgentHelper:
-    def __init__(self, func, pset, bounds):
-        self.func = [compile(func_, pset) for func_ in func]
-        self.bounds = bounds
-
-    def predict(self, state):
-        # print(state)
-        state = list(map(float, state))
-        # print(compile(self.func, self.pset)(*state))
-        # import pdb; pdb.set_trace()
-        # print()
-        output = [func_(*state) for func_ in self.func]
-        # print(output)
-        for i in range(len(output)):
-            data = np.clip(output[i], *self.bounds)
-            if type(data) == np.ndarray:
-                output[i] = float(data[0])
-            else:
-                output[i] = float(data)
-        # print(output)
-        return output
-
-
-class Agent:
+class MultiTreeAgent(Agent):
     def __init__(self, env: Environment):
-        self.env = env
-        self.num_states = self.env.get_observation_space()
-        self.num_actions = self.env.get_action_space()
-        self.is_discrete = self.env.is_discrete()
+        super().__init__(env)
 
-        self.pset = create_primitive_set(self.num_states)
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-        creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax, pset=self.pset)
+    def _create_primitive_set(self, num_inputs, _):
+        return basic_primitive_set(num_inputs, "multi_tree_pset")
 
-        self.toolbox = base.Toolbox()
+    def _get_agent_helper(self, agent):
+        agent = tuple(map(lambda x: compile(x, self.pset), agent))
 
-        self.toolbox.register("expr", gp.genHalfAndHalf, pset=self.pset, min_=1, max_=3)
-        self.toolbox.register("individual", tools.initIterate, creator.Individual, self.toolbox.expr)
-        self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        self.toolbox.register('evaluate', self._fitness)
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
-        self.toolbox.register("mate", gp.cxOnePoint)
-        self.toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
-        self.toolbox.register("mutate", gp.mutUniform, expr=self.toolbox.expr_mut, pset=self.pset)
+        return super()._get_agent_helper(get_scores(agent))
 
-        self.toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
-        self.toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
-
-        for i in range(self.num_actions):
-            self.toolbox.register(f"individual{i + 1}", tools.initIterate, creator.Individual, self.toolbox.expr)
-            self.toolbox.register("population1", tools.initRepeat, list, eval(f"self.toolbox.individual{i + 1}"))
-
-        self.toolbox.register("compile", gp.compile, pset=self.pset)
-
-        self.stats = tools.Statistics(lambda ind: ind.fitness.values)
-        # self.stats.register("avg", np.mean, axis=0)
-        # self.stats.register("std", np.std, axis=0)
-        self.stats.register("min", np.min, axis=0)
-        self.stats.register("max", np.max, axis=0)
-
-    def predict(self, state):
-        if self.is_discrete:
-            action = random.randint(0, self.num_actions - 1)
-        else:
-            action = random.uniform(0, 1)
-        return action
-
-    def get_agent_helper(self):
-        if self.is_discrete:
-            return AgentHelper
-        else:
-            return ContinuousAgentHelper
-
-    def get_agent_args(self, agent):
-        if self.is_discrete:
-            return agent, self.pset
-        else:
-            return agent, self.pset, self.env.get_bounds()
-
-    def _fitness(self, agent):
-        result = self.env.play(self.get_agent_helper()(*self.get_agent_args(agent)), render=False)
-        # print(result)
-        reward, steps = result['reward'], result['steps']
-        if reward is None:
-            reward = 0
-        if steps is None:
-            steps = 0
-        if "rewards" in result['info']:
-            reward += sum(result['info']['rewards'].values())
-        return reward,  # , steps
-
-    def train(self):
-        pops = [self.toolbox.population(n=300) for _ in range(self.num_actions)]
+    def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=3):
+        pops = [self.toolbox.population(n=n_pop) for _ in range(self.num_actions)]
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 
         log = None
-        generations = 5
 
         try:
-            pop, log = Evolve(pops, self.toolbox, 0.9, 0.5, generations,
-                              halloffame=hofs,
-                              verbose=True, stats=self.stats)
+            for _ in range(n_gens):
+                pops, log = Evolve(pops, self.toolbox, 0.9, 0.5, 1,
+                                  halloffame=hofs,
+                                  verbose=True, stats=self.stats)
+
+                fitnesses = self.toolbox.map(self.toolbox.evaluate, zip(*pops))
+                min_fitness_index = np.argmin(fitnesses)
+                for i in range(len(pops)):
+                    pops[i][min_fitness_index] = hofs[i][0]
+
         except KeyboardInterrupt:
             pass
+        except Exception as e:
+            print(e)
+        finally:
+            individual = [hof[0] for hof in hofs]
 
-        # individual = [self.toolbox.compile(expr=hof_[0]) for hof_ in hofs]
-        individual = [hof[0] for hof in hofs]
-        print("Best individual is:")
-        for i in range(self.num_actions):
-            print(i, individual[i])
-
-        training_stats = {
-            "log": log,
-        }
-
-        if self.is_discrete:
-            return AgentHelper(individual, self.pset), training_stats
-        else:
-            return ContinuousAgentHelper(individual, self.pset, self.env.get_bounds()), training_stats
+            training_stats = {
+                "log": log,
+            }
+            return self.agent_helper(individual), training_stats
 
 
 # Re-write the eaSimple() function to evolve the 4 individuals w.r.t to the cost returned by the python function: cost_function
@@ -232,6 +109,7 @@ def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose
         record = []
         for i in range(len(pop)):
             # print(i, stats.compile(pop[i]))
+            print('sldfjlas;dkfj', len(pop), type(pop[i]), len(pop[i]))
             record.append(stats.compile(pop[i]) if stats else {})
 
         for i in range(len(pop)):
