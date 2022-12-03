@@ -5,15 +5,18 @@ from stable_baselines3 import DQN, PPO
 from yaes.agent.modi import Agent
 from yaes.environment import Environment, wrap_env
 from yaes.evaluate import Evaluator
+from visualize_results import visualize_results
 
 # First, we create our environment called LunarLander-v2
-import flappy_bird_gym
+# import flappy_bird_gym
 
 # gym_env = flappy_bird_gym.make("FlappyBird-v0")
-import highway_env
+# import highway_env
 import gym_pygame
 
-gym_env = gym.make("Pixelcopter-PLE-v0")
+gym_name = "CartPole-v1"
+# gym_env = gym.make("MountainCarContinuous-v0")
+gym_env = gym.make(gym_name)
 
 env = wrap_env(gym_env)
 env.reset()
@@ -42,6 +45,8 @@ with open('best_agent.pkl', 'wb') as f:
 
 print(best_agent)
 print(best_agent.__dict__)
+
+visualize_results(gym_name)
 
 # for i in range(1):
 #     env.play(stats[1]["best_agent"], render=True)
