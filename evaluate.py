@@ -82,10 +82,8 @@ def plot_stats(stats):
     plt.ylabel("Reward")
     for i in range(num_agents):
         stat = stats[i]
-        df = stat["monitor_df"]
-        df["max_reward"] = df["r"].cummax()
         label = agents[i].__class__.__name__
-        plt.plot(df["t"], df["max_reward"], label=label)
+        plt.plot(stat["monitor_df"]["t"], stat["monitor_df"]["r"].cummax(), label=label)
     plt.legend()
     plt.show()
     plt.savefig("agent_comparison.png")
@@ -94,3 +92,21 @@ def plot_stats(stats):
 plot_stats(stats)
 
 dump_stats(stats)
+
+
+def plot_stats2(stats):
+    ax = plt.subplot(111)
+    num_agents = len(stats)
+    plt.title("Agent Comparison")
+    plt.xlabel("Num evaluations")
+    plt.ylabel("Reward")
+    for i in range(num_agents):
+        stat = stats[i]
+        label = agents[i].__class__.__name__
+        plt.plot(range(len(stat["monitor_df"])), stat["monitor_df"]["r"].cummax(), label=label)
+    plt.legend()
+    plt.show()
+    plt.savefig("agent_comparison2.png")
+
+
+plot_stats2(stats)
