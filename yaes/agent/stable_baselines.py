@@ -16,4 +16,5 @@ class RLAgent:
 
     def predict(self, state):
         action, _state = self.agent.predict(state)
+        print(action)
         return action
