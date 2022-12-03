@@ -22,7 +22,7 @@ class Evaluator:
             trainer = Trainer(self.env, agent_class, log_dir=log_dir)
             best_agent, training_stats, eval_stats = trainer.train()
             df = pd.read_csv(os.path.join(log_dir, 'monitor.csv'), header=1)
-            # shutil.rmtree(log_dir)
+            shutil.rmtree(log_dir)
             stats.append(
                 {
                     "training_stats": training_stats,

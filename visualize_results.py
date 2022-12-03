@@ -8,7 +8,7 @@ import gym_pygame
 def visualize_results(gym_name: str,
                   path_to_best_agent: str = "best_agent.pkl",
                   videos_dir: str = "agent_preview_copter",
-                  max_duration: int = 100):
+                  max_duration: int = 10):
     """
     Render a play of the best agent.
 
