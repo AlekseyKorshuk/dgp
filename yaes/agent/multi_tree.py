@@ -41,8 +41,7 @@ sigmoid_v = np.vectorize(sigmoid)
 
 class AgentHelper:
     def __init__(self, func, pset):
-        self.func = func
-        self.pset = pset
+        self.func = [compile(func_, pset) for func_ in func]
 
     def predict(self, state):
         # print(state)
@@ -50,7 +49,7 @@ class AgentHelper:
         # print(compile(self.func, self.pset)(*state))
         # import pdb; pdb.set_trace()
         # print()
-        output = [compile(func_, self.pset)(*state) for func_ in self.func]
+        output = [func_(*state) for func_ in self.func]
         p = sigmoid_v(output)
         p = p.argmax()
         return int(p.round())
@@ -58,8 +57,7 @@ class AgentHelper:
 
 class ContinuousAgentHelper:
     def __init__(self, func, pset, bounds):
-        self.func = func
-        self.pset = pset
+        self.func = [compile(func_, pset) for func_ in func]
         self.bounds = bounds
 
     def predict(self, state):
@@ -68,7 +66,7 @@ class ContinuousAgentHelper:
         # print(compile(self.func, self.pset)(*state))
         # import pdb; pdb.set_trace()
         # print()
-        output = [compile(func_, self.pset)(*state) for func_ in self.func]
+        output = [func_(*state) for func_ in self.func]
         # print(output)
         for i in range(len(output)):
             data = np.clip(output[i], *self.bounds)
@@ -140,16 +138,22 @@ class Agent:
         result = self.env.play(self.get_agent_helper()(*self.get_agent_args(agent)), render=False)
         # print(result)
         reward, steps = result['reward'], result['steps']
-        return reward + steps,  # , steps
+        if reward is None:
+            reward = 0
+        if steps is None:
+            steps = 0
+        if "rewards" in result['info']:
+            reward += sum(result['info']['rewards'].values())
+        return reward,  # , steps
 
     def train(self):
-        pops = [self.toolbox.population(n=500) for _ in range(self.num_actions)]
+        pops = [self.toolbox.population(n=300) for _ in range(self.num_actions)]
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 
-        generations = 100
+        generations = 20
 
         try:
-            pop, log = Evolve(pops, self.toolbox, 0.5, 0.4, generations,
+            pop, log = Evolve(pops, self.toolbox, 0.9, 0.5, generations,
                               halloffame=hofs,
                               verbose=True, stats=self.stats)
         except KeyboardInterrupt:

@@ -18,7 +18,7 @@ class Trainer:
     def train_rl(self):
         best_agent = self.agent_class.train()
         training_stats = {}
-        eval_stats = self.evaluate(best_agent, num_episodes=100)
+        eval_stats = self.evaluate(best_agent, num_episodes=1)
         return best_agent, training_stats, eval_stats
 
     def train_ea(self):
@@ -31,14 +31,14 @@ class Trainer:
         eval_stats = self.evaluate(best_agent, num_episodes=1)
         return best_agent, training_stats, eval_stats
 
-    def evaluate(self, agent, num_episodes=100):
+    def evaluate(self, agent, num_episodes=1):
         eval_stats = []
         for _ in range(num_episodes):
             self.env.reset()
             stats = self.env.play(agent, render=False)
             eval_stats.append(stats)
         stats = {
-            "reward": sum([s["reward"] for s in eval_stats]) / len(eval_stats),
-            "steps": sum([s["steps"] for s in eval_stats]) / len(eval_stats),
+            "reward": sum([s["reward"] if s["reward"] is not None else 0 for s in eval_stats]) / len(eval_stats),
+            "steps": sum([s["steps"] if s["reward"] is not None else 0 for s in eval_stats]) / len(eval_stats),
         }
         return stats
