@@ -133,14 +133,19 @@ class Agent:
     def train(self, ):
         pop = self.toolbox.population(n=300)
         hof = tools.HallOfFame(1)
+        log = None
         try:
             pop, log = algorithms.eaSimple(pop, self.toolbox, 0.9, 0.5, 5, stats=self.stats,
                                            halloffame=hof, verbose=True)
         except KeyboardInterrupt:
             pass
 
+        training_stats = {
+            "log": log,
+        }
+
         print(hof[0])
         if self.is_discrete:
-            return AgentHelper(hof[0], self.pset)
+            return AgentHelper(hof[0], self.pset), training_stats
         else:
-            return ContinuousAgentHelper(hof[0], self.pset, self.env.get_bounds())
+            return ContinuousAgentHelper(hof[0], self.pset, self.env.get_bounds()), training_stats

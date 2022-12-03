@@ -25,7 +25,7 @@ class Environment:
         pass
 
     def step(self, action):
-        self.check_action(action)
+        # self.check_action(action)
         try:
             self.state_, reward, self.done, self.info = self.gym_env.step(action)
         except Exception as e:
