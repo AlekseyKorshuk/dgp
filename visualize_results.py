@@ -13,7 +13,7 @@ def visualize_results(gym_name: str,
 
     :param gym_name: Name of the gym.
     :param path_to_best_agent: location of the pickled best agent
-    :param videos_dir: directory in which the best agents are stored
+    :param videos_dir: directory in rendered video will be stored
     :param max_duration: maximum duration of video in seconds
     """
     gym_env = gym.make(gym_name)
