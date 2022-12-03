@@ -79,13 +79,13 @@ class Agent:
         reward, steps = result["reward"], result["steps"]
         return reward,  # , steps
 
-    def train(self, n_pop=300, cxpb=0.9, mutpb=0.5, n_gens=10):
+    def train(self, n_pop=300, cxpb=0.9, mutpb=0.5, n_gens=5):
         pop = self.toolbox.population(n=n_pop)
         hof = tools.HallOfFame(1)
         log = None
         try:
             for _ in range(n_gens):
-                pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb, mutpb, ngen=0, stats=self.stats,
+                pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb, mutpb, ngen=1, stats=self.stats,
                                                halloffame=hof, verbose=True)
                 min_fitness_index = np.argmin(list(map(self._fitness, pop)))
                 pop[min_fitness_index] = hof[0]

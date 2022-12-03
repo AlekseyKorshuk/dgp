@@ -151,7 +151,7 @@ class Agent:
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 
         log = None
-        generations = 20
+        generations = 5
 
         try:
             pop, log = Evolve(pops, self.toolbox, 0.9, 0.5, generations,

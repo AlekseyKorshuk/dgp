@@ -1,28 +1,31 @@
 from yaes.environment import Environment
 from yaes.agent.stable_baselines import RLAgent
+from stable_baselines3.common.monitor import Monitor
 
 
 class Trainer:
 
-    def __init__(self, env: Environment, agent_class, **config):
+    def __init__(self, env: Environment, agent_class, log_dir="tmp/", **config):
         self.env = env
         self.agent_class = agent_class
         self.config = config
+        self.log_dir = log_dir
 
     def train(self):
+        self.agent_class.env = self.env
         if isinstance(self.agent_class, RLAgent):
             return self.train_rl()
         else:
             return self.train_ea()
 
     def train_rl(self):
-        best_agent = self.agent_class.train()
+        best_agent = self.agent_class.train(self.log_dir)
         training_stats = {}
         eval_stats = self.evaluate(best_agent, num_episodes=1)
         return best_agent, training_stats, eval_stats
 
     def train_ea(self):
-        self.env.reset()
+        self.env.gym_env = Monitor(self.env.gym_env, self.log_dir)
         best_agent, training_stats = self.agent_class.train()
         # TODO: Implement this method
         eval_stats = self.evaluate(best_agent, num_episodes=1)

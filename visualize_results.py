@@ -2,6 +2,7 @@ import dill
 import gym
 from yaes.environment import wrap_env
 import sys
+import gym_pygame
 
 
 def visualize_results(gym_name: str,
