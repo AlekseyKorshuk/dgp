@@ -27,4 +27,4 @@ def visualize_results(gym_name: str,
 
 
 if __name__ == '__main__':
-    visualize_results(sys.argv[1])
+    visualize_results(sys.argv[1], sys.argv[2])
