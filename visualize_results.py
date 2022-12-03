@@ -24,7 +24,7 @@ def visualize_results(gym_name: str,
         best_agent = dill.load(f, fix_imports=False, encoding="ASCII", errors="")
 
     env.gym_env = gym.wrappers.RecordVideo(env.gym_env, videos_dir)
-    print(env.play(best_agent, False, max_duration=max_duration))
+    print(env.play(best_agent, True, max_duration=max_duration))
 
 
 if __name__ == '__main__':

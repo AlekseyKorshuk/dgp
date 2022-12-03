@@ -1,10 +1,21 @@
+import numpy as np
+import random
+
+
+def set_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+
+
+set_seed(0)
+
 import gym
 from matplotlib import pyplot as plt
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3 import DQN, PPO, TD3
 from stable_baselines3.common.base_class import BaseAlgorithm
 
-from yaes.agent import multi_tree
+from yaes.agent import multi_tree, RLAgent
 from yaes.agent.modi import ModiAgent
 from yaes.environment import Environment, wrap_env
 from yaes.evaluate import Evaluator
@@ -13,18 +24,18 @@ import dill
 # import flappy_bird_gym
 
 # gym_env = flappy_bird_gym.make("FlappyBird-v0")
-# import gym_pygame
+import gym_pygame
 
 # import gym_chrome_dino
 # gym_env = gym.make("LunarLander-v2")
 # gym_env = gym.make("MountainCarContinuous-v0")
-gym_env = gym.make("CartPole-v1")
+# gym_env = gym.make("CartPole-v1")
 print(gym.envs.registry.all())
 
 # import highway_env
 # import slimevolleygym
 
-# gym_env = gym.make("Catcher-PLE-v0")
+gym_env = gym.make("Catcher-PLE-v0")
 # gym_env = gym.make("Pendulum-v1")
 # gym_env = gym.make("BipedalWalker-v3")
 # Then, we create our environment wrapper
@@ -38,10 +49,11 @@ print(env.get_action_space())
 # Evaluate the agents
 evaluator = Evaluator(env)
 # rl_agent = RLAgent(env, DQN, "MlpPolicy", {"total_timesteps": int(2e5), "progress_bar": True}, verbose=1)
-# rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(10000), "progress_bar": True}, verbose=1)
+rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(20000), "progress_bar": True}, verbose=1)
 multi_tree_agent = multi_tree.MultiTreeAgent(env)
 modi_agent = ModiAgent(env)
-stats = evaluator.evaluate([multi_tree_agent, modi_agent])  # , rl_agent])
+agents = [multi_tree_agent, modi_agent, rl_agent]
+stats = evaluator.evaluate(agents)  # , rl_agent])
 env.gym_env.metadata['render_fps'] = 1
 env.gym_env = gym.wrappers.RecordVideo(env.gym_env, 'video')
 # env.gym_env = Monitor(env.gym_env, './video', force=True)
@@ -72,10 +84,11 @@ def plot_stats(stats):
         stat = stats[i]
         df = stat["monitor_df"]
         df["max_reward"] = df["r"].cummax()
-        label = stat["best_agent"].__class__
+        label = agents[i].__class__.__name__
         plt.plot(df["t"], df["max_reward"], label=label)
     plt.legend()
     plt.show()
+    plt.savefig("agent_comparison.png")
 
 
 plot_stats(stats)

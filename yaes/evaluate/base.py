@@ -1,8 +1,7 @@
 import os
 import shutil
+import time
 from copy import deepcopy
-
-
 
 from yaes.environment import Environment
 from yaes.train import Trainer
@@ -16,19 +15,25 @@ class Evaluator:
 
     def evaluate(self, agents):
         stats = []
+        monitor_df_paths = []
         for agent_class in agents:
-            log_dir = "monitor_stats_{}".format(agent_class.__str__())
+            log_dir = "monitor_stats_{}".format(agent_class.__class__.__name__)
             os.makedirs(log_dir, exist_ok=True)
+            monitor_df_paths.append(log_dir + "/monitor.csv")
             trainer = Trainer(self.env, agent_class, log_dir=log_dir)
             best_agent, training_stats, eval_stats = trainer.train()
-            df = pd.read_csv(os.path.join(log_dir, 'monitor.csv'), header=1)
-            shutil.rmtree(log_dir)
+            # wait for file to be written
+            # shutil.rmtree(log_dir)
             stats.append(
                 {
                     "training_stats": training_stats,
                     "eval_stats": eval_stats,
                     "best_agent": best_agent,
-                    "monitor_df": df
+                    # "monitor_df": df
                 }
             )
+        for i, path in enumerate(monitor_df_paths):
+            df = pd.read_csv(path, header=1)
+            stats[i]["monitor_df"] = df
+            # shutil.rmtree(path.split("/")[0])
         return stats
