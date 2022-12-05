@@ -14,12 +14,10 @@ class AgentHelper:
     def predict(self, state):
         state = list(map(float, state))
         output = self.func(*state)
-
         if self.is_continuous and self.bounds is not None:
             output = np.clip(output, *self.bounds).tolist()
         else:
             output = int(np.argmax(output))
-
         return output
 
 
@@ -77,9 +75,10 @@ class Agent:
         try:
             for _ in range(n_gens):
                 pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb, mutpb, ngen=1, stats=self.stats,
-                                       halloffame=hof, verbose=True)
+                                               halloffame=hof, verbose=True)
+                print("modi", len(pop))
 
-                min_fitness_index = np.argmin(list(map(self._fitness, pop)))
+                min_fitness_index = np.argmin(list(map(lambda x: x.fitness.values[0], pop)))
                 pop[min_fitness_index] = hof[0]
         except KeyboardInterrupt:
             pass

@@ -1,5 +1,12 @@
 import numpy as np
 import random
+import gym
+from stable_baselines3 import PPO
+
+from yaes.agent import multi_tree, RLAgent
+from yaes.agent.modi import ModiAgent
+from yaes.environment import wrap_env
+from yaes.evaluate import Evaluator
 
 
 def set_seed(seed):
@@ -7,133 +14,32 @@ def set_seed(seed):
     random.seed(seed)
 
 
-set_seed(0)
+def main():
+    set_seed(0)
 
-import gym
-from matplotlib import pyplot as plt
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3 import DQN, PPO, TD3
-from stable_baselines3.common.base_class import BaseAlgorithm
+    gym_env = gym.make("CartPole-v1")
 
-from yaes.agent import multi_tree, RLAgent
-from yaes.agent.modi import ModiAgent
-from yaes.environment import Environment, wrap_env
-from yaes.evaluate import Evaluator
-import dill
-# First, we create our environment called LunarLander-v2
-# import flappy_bird_gym
+    env = wrap_env(gym_env)
 
-# gym_env = flappy_bird_gym.make("FlappyBird-v0")
-import gym_pygame
+    evaluator = Evaluator(env)
+    rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(15000), "progress_bar": True}, verbose=1)
+    multi_tree_agent = multi_tree.MultiTreeAgent(env)
+    modi_agent = ModiAgent(env)
+    agents = [multi_tree_agent, modi_agent, rl_agent]
+    stats = evaluator.evaluate(agents)  # , rl_agent])
+    env.gym_env.metadata['render_fps'] = 1
 
-# import gym_chrome_dino
-# gym_env = gym.make("LunarLander-v2")
-# gym_env = gym.make("MountainCarContinuous-v0")
-# gym_env = gym.make("CartPole-v1")
-print(gym.envs.registry.all())
+    agent_names = [agent.__class__.__name__ for agent in agents]
+    best_agents = [stat["best_agent"] for stat in stats]
 
-# import highway_env
-# import slimevolleygym
-
-gym_env = gym.make("Catcher-PLE-v0")
-# gym_env = gym.make("Pendulum-v1")
-# gym_env = gym.make("BipedalWalker-v3")
-# Then, we create our environment wrapper
-env = wrap_env(gym_env)
-env.reset()
-print(env.state)
-print(env.get_observation_space())
-print(env.gym_env.action_space)
-print(env.get_action_space())
-# env.demo(True)
-# Evaluate the agents
-evaluator = Evaluator(env)
-# rl_agent = RLAgent(env, DQN, "MlpPolicy", {"total_timesteps": int(2e5), "progress_bar": True}, verbose=1)
-rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(20000), "progress_bar": True}, verbose=1)
-multi_tree_agent = multi_tree.MultiTreeAgent(env)
-modi_agent = ModiAgent(env)
-agents = [multi_tree_agent, modi_agent, rl_agent]
-stats = evaluator.evaluate(agents)  # , rl_agent])
-env.gym_env.metadata['render_fps'] = 1
-env.gym_env = gym.wrappers.RecordVideo(env.gym_env, 'video')
-# env.gym_env = Monitor(env.gym_env, './video', force=True)
-
-print(stats)
+    for agent, agent_name in zip(best_agents, agent_names):
+        video_folder = f'./logs/monitor_stats_{agent_name}/video'
+        gym_rec = gym.wrappers.RecordVideo(gym_env, video_folder)
+        wrapped_env = wrap_env(gym_rec)
+        wrapped_env.play(agent, render=True, max_duration=20, sleep=0)
+        print(f"Video for {agent_names} saved to {video_folder}")
+    gym_env.close()
 
 
-def dump_results(stats):
-    for i, stat in enumerate(stats):
-        best_agent = stat.pop("best_agent")
-        print(type(best_agent))
-        if isinstance(best_agent, BaseAlgorithm):
-            best_agent.save(f"best_agent{i}")
-        else:
-            with open(f'best_agent{i}.pkl', 'wb') as f:
-                dill.dump(best_agent, f)
-
-
-def plot_stats(stats):
-    ax = plt.subplot(111)
-    num_agents = len(stats)
-    plt.title("Agent Comparison")
-    plt.xlabel("Seconds")
-    plt.ylabel("Reward")
-    for i in range(num_agents):
-        stat = stats[i]
-        label = agents[i].__class__.__name__
-        plt.plot(stat["monitor_df"]["t"], stat["monitor_df"]["r"].cummax(), label=label)
-    plt.legend()
-    plt.show()
-    plt.savefig("agent_comparison.png")
-
-
-# plot_stats(stats)
-
-dump_stats(stats)
-
-
-def plot_stats2(stats):
-    ax = plt.subplot(111)
-    num_agents = len(stats)
-    plt.title("Agent Comparison")
-    plt.xlabel("Num evaluations")
-    plt.ylabel("Reward")
-    for i in range(num_agents):
-        stat = stats[i]
-        label = agents[i].__class__.__name__
-        plt.plot(range(len(stat["monitor_df"])), stat["monitor_df"]["r"].cummax(), label=label)
-    plt.legend()
-    plt.show()
-    plt.savefig("agent_comparison2.png")
-
-
-# plot_stats2(stats)
-
-
-def plot_stats(stats):
-    plt.subplot(1, 2, 1, sharey=True)
-    num_agents = len(stats)
-    # change the size of the figure
-    plt.title("Agent Comparison")
-    plt.xlabel("Seconds")
-    plt.ylabel("Reward")
-    for i in range(num_agents):
-        stat = stats[i]
-        label = agents[i].__class__.__name__
-        plt.plot(stat["monitor_df"]["t"], stat["monitor_df"]["r"].cummax(), label=label)
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.title("Agent Comparison")
-    plt.xlabel("Num evaluations")
-    plt.ylabel("Reward")
-    for i in range(num_agents):
-        stat = stats[i]
-        label = agents[i].__class__.__name__
-        plt.plot(range(len(stat["monitor_df"])), stat["monitor_df"]["r"].cummax(), label=label)
-    plt.legend()
-    plt.show()
-    plt.savefig("agent_comparison2.png")
-
-
-plot_stats(stats)
+if __name__ == '__main__':
+    main()

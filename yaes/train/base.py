@@ -27,8 +27,8 @@ class Trainer:
     def train_ea(self):
         self.env.gym_env = Monitor(self.env.gym_env, self.log_dir)
         best_agent, training_stats = self.agent_class.train()
-        # TODO: Implement this method
         eval_stats = self.evaluate(best_agent, num_episodes=1)
+        self.env.gym_env = self.env.gym_env.env
         return best_agent, training_stats, eval_stats
 
     def evaluate(self, agent, num_episodes=1):
