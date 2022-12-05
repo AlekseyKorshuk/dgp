@@ -1,3 +1,6 @@
+import random
+import uuid
+
 from .base import Agent
 from .deap_primitives import basic_primitive_set
 from deap import gp, creator, tools
@@ -16,7 +19,8 @@ class ModiAgent(Agent):
         return super()._get_agent_helper(func)
 
     def _create_primitive_set(self, num_inputs, num_outputs):
-        pset = basic_primitive_set(num_inputs, "modi_pset")
+        random_uuid = uuid.uuid4().hex
+        pset = basic_primitive_set(num_inputs, random_uuid)
 
         for i in range(num_outputs):
             modi_i = gp.Modi(i)
