@@ -13,7 +13,7 @@ class Evaluator:
         stats = []
         monitor_df_paths = []
         for agent_class in agents:
-            log_dir = "monitor_stats_{}".format(agent_class.__class__.__name__)
+            log_dir = "logs/monitor_stats_{}".format(agent_class.__class__.__name__)
             os.makedirs(log_dir, exist_ok=True)
             monitor_df_paths.append(log_dir + "/monitor.csv")
             trainer = Trainer(self.env, agent_class, log_dir=log_dir)

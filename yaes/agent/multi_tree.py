@@ -1,3 +1,5 @@
+import uuid
+
 from yaes.environment import Environment
 from deap import tools
 from .deap_primitives import basic_primitive_set
@@ -16,7 +18,9 @@ class MultiTreeAgent(Agent):
         super().__init__(env)
 
     def _create_primitive_set(self, num_inputs, _):
-        return basic_primitive_set(num_inputs, "multi_tree_pset")
+        random_uuid = uuid.uuid4().hex
+        pset = basic_primitive_set(num_inputs, random_uuid)
+        return pset
 
     def _get_agent_helper(self, agent):
         agent = tuple(map(lambda x: compile(x, self.pset), agent))

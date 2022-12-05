@@ -61,11 +61,9 @@ env.gym_env = gym.wrappers.RecordVideo(env.gym_env, 'video')
 print(stats)
 
 
-def dump_stats(stats):
+def dump_results(stats):
     for i, stat in enumerate(stats):
         best_agent = stat.pop("best_agent")
-        # with open(f'stats{i}.pkl', 'wb') as f:
-        #     dill.dump(stats, f)
         print(type(best_agent))
         if isinstance(best_agent, BaseAlgorithm):
             best_agent.save(f"best_agent{i}")
@@ -89,7 +87,7 @@ def plot_stats(stats):
     plt.savefig("agent_comparison.png")
 
 
-plot_stats(stats)
+# plot_stats(stats)
 
 dump_stats(stats)
 
@@ -109,4 +107,33 @@ def plot_stats2(stats):
     plt.savefig("agent_comparison2.png")
 
 
-plot_stats2(stats)
+# plot_stats2(stats)
+
+
+def plot_stats(stats):
+    plt.subplot(1, 2, 1, sharey=True)
+    num_agents = len(stats)
+    # change the size of the figure
+    plt.title("Agent Comparison")
+    plt.xlabel("Seconds")
+    plt.ylabel("Reward")
+    for i in range(num_agents):
+        stat = stats[i]
+        label = agents[i].__class__.__name__
+        plt.plot(stat["monitor_df"]["t"], stat["monitor_df"]["r"].cummax(), label=label)
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.title("Agent Comparison")
+    plt.xlabel("Num evaluations")
+    plt.ylabel("Reward")
+    for i in range(num_agents):
+        stat = stats[i]
+        label = agents[i].__class__.__name__
+        plt.plot(range(len(stat["monitor_df"])), stat["monitor_df"]["r"].cummax(), label=label)
+    plt.legend()
+    plt.show()
+    plt.savefig("agent_comparison2.png")
+
+
+plot_stats(stats)
