@@ -26,7 +26,7 @@ def main():
     multi_tree_agent = multi_tree.MultiTreeAgent(env)
     modi_agent = ModiAgent(env)
     agents = [multi_tree_agent, modi_agent, rl_agent]
-    stats = evaluator.evaluate(agents)  # , rl_agent])
+    stats = evaluator.evaluate(agents)
     env.gym_env.metadata['render_fps'] = 1
 
     agent_names = [agent.__class__.__name__ for agent in agents]
