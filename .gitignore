@@ -5,6 +5,10 @@
 *.pkl
 agent_preview_copter/
 .idea/
+video
+monitor*
+*.zip
+*.png
 
 # User-specific stuff
 .idea/**/workspace.xml

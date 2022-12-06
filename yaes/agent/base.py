@@ -3,27 +3,52 @@ from deap import gp
 from deap import creator, base, tools, algorithms
 import operator
 import numpy as np
+from typing import Callable, Union
 
 
 class AgentHelper:
-    def __init__(self, func, bounds=None, is_continuous=False, formula=None):
+    def __init__(self, func: Callable[[float, ...], list[float]],
+                 bounds: tuple[float, float] = None,
+                 is_continuous: bool = False):
+        """
+        This class encapsulates postprocessing logic for vector of outputs
+        and exposes 'predict' method which will be used by OpenAI Gym.
+
+        :param func: function which accepts state as an input and returns a vector of outputs with scores for each
+                     action.
+        :param bounds: domain bounds for continuous outputs.
+        :param is_continuous: a flag which indicates whether the output should be continuous or discrete.
+        """
         self.func = func
         self.bounds = bounds
         self.is_continuous = is_continuous
         self.formula = formula
 
-    def predict(self, state):
+    def predict(self, state: list[float]) -> Union[list[float], int]:
+        """
+        Returns the next action (either its index or a magnitude) based on the game state.
+
+        :param state: state of the game.
+        :return: action.
+        """
         state = list(map(float, state))
         output = self.func(*state)
+
         if self.is_continuous and self.bounds is not None:
             output = np.clip(output, *self.bounds).tolist()
         else:
             output = int(np.argmax(output))
+
         return output
 
 
 class Agent:
     def __init__(self, env: Environment):
+        """
+        This class contains a default set of operations and primitives required for training.
+
+        :param env: an OpenAI Gym environment.
+        """
         self.env = env
         self.num_states = self.env.get_observation_space()
         self.num_actions = self.env.get_action_space()
@@ -36,7 +61,11 @@ class Agent:
 
         self.agent_helper = self._get_agent_helper
 
-        self.toolbox = base.Toolbox()
+        self.toolbox = self._create_toolbox()
+        self.stats = self._create_stats()
+
+    def _create_toolbox(self):
+        toolbox = base.Toolbox()
         self.toolbox.register("expr", gp.genHalfAndHalf, pset=self.pset, min_=2, max_=3)
         self.toolbox.register("individual", tools.initIterate, creator.Individual, self.toolbox.expr)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
@@ -49,11 +78,16 @@ class Agent:
         self.toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
         self.toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
 
-        self.stats = tools.Statistics(lambda ind: ind.fitness.values)
+        return toolbox
+
+    def _create_stats(self):
+        stats = tools.Statistics(lambda ind: ind.fitness.values)
         self.stats.register("avg", np.mean, axis=0)
         self.stats.register("std", np.std, axis=0)
         self.stats.register("min", np.min, axis=0)
         self.stats.register("max", np.max, axis=0)
+
+        return stats
 
     def _create_primitive_set(self, num_inputs, num_outputs):
         raise NotImplementedError
@@ -69,7 +103,16 @@ class Agent:
         reward, steps = result["reward"], result["steps"]
         return reward,  # , steps
 
-    def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=10):
+    def train(self, n_pop: int = 30, cxpb: float = 0.9, mutpb: float = 0.5, n_gens: int = 10):
+        """
+        This function evolves a population of functions and returns the best performing one.
+
+        :param n_pop: number of individuals in a population.
+        :param cxpb: probability of crossover.
+        :param mutpb: probability of mutation.
+        :param n_gens: number of generations.
+        :return: function with the highest fitness
+        """
         pop = self.toolbox.population(n=n_pop)
         hof = tools.HallOfFame(1)
         log = None

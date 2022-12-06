@@ -8,6 +8,10 @@ from deap import gp, creator, tools
 
 class ModiAgent(Agent):
     def __init__(self, env):
+        """
+        This class contains declarations required for evolution of Modi individuals.
+        :param env: an OpenAI Gym environment.
+        """
         super().__init__(env)
         creator.create("ModiIndividual", gp.MultiOutputTree, fitness=creator.FitnessMax, pset=self.pset,
                        num_outputs=self.num_actions)

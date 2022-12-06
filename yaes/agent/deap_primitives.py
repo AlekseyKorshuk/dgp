@@ -1,3 +1,6 @@
+"""
+Utility functions for creation of primitives and primitives sets.
+"""
 from typing import Any
 from deap.gp import PrimitiveSetTyped
 import operator
@@ -12,7 +15,13 @@ def safe_div(x1: float, x2: float, eps=1e-15):
     return 0 if x2 < eps else x1 / x2
 
 
-def basic_primitive_set(num_inputs, name):
+def basic_primitive_set(num_inputs: int, name: str) -> PrimitiveSetTyped:
+    """
+    Creates a default primitive set.
+    :param num_inputs: number of inputs.
+    :param name: name of the primitive set.
+    :return: default primitive set.
+    """
     pset = PrimitiveSetTyped(name, [float] * num_inputs, float)
     pset.addPrimitive(operator.xor, [bool, bool], bool)
     pset.addPrimitive(operator.mul, [float, float], float)
