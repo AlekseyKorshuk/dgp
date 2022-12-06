@@ -1,11 +1,12 @@
 import uuid
+from typing import List, Tuple
 
 from yaes.environment import Environment
 from .deap_primitives import basic_primitive_set
 from .base import Agent
 from deap.gp import compile
 import numpy as np
-from deap import algorithms, creator, base, tools
+from deap import algorithms, creator, base, tools, gp
 
 
 def get_scores(agent):
@@ -59,13 +60,13 @@ class MultiTreeAgent(Agent):
         return self.agent_helper(individual), training_stats
 
 
-def Evolve(pops: list[list[creator.Individual]],
+def Evolve(pops: List[List[gp.PrimitiveTree]],
            toolbox: base.Toolbox,
            cxpb: float, mutpb: float, ngen: int,
            stats: tools.Statistics = None,
            halloffame: tools.HallOfFame = None,
            verbose: bool = __debug__) \
-        -> tuple[list[list[creator.Individual]], tools.Logbook]:
+        -> Tuple[List[List[gp.PrimitiveTree]], tools.Logbook]:
     """
     This function evolves a population of MultiTrees. Is a modification of deap's eaSimple algorithm.
 

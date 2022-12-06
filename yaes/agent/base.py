@@ -3,13 +3,14 @@ from deap import gp
 from deap import creator, base, tools, algorithms
 import operator
 import numpy as np
-from typing import Callable, Union
+from typing import Callable, Union, List, Tuple, Dict, Any
 
 
 class AgentHelper:
-    def __init__(self, func: Callable[[float, ...], list[float]],
-                 bounds: tuple[float, float] = None,
-                 is_continuous: bool = False):
+    def __init__(self, func: Callable[[float], List[float]],
+                 bounds: Tuple[float, float] = None,
+                 is_continuous: bool = False,
+                 formula: str = None):
         """
         This class encapsulates postprocessing logic for vector of outputs
         and exposes 'predict' method which will be used by OpenAI Gym.
@@ -18,13 +19,14 @@ class AgentHelper:
                      action.
         :param bounds: domain bounds for continuous outputs.
         :param is_continuous: a flag which indicates whether the output should be continuous or discrete.
+        :param formula: formula which was used to generate the function.
         """
         self.func = func
         self.bounds = bounds
         self.is_continuous = is_continuous
         self.formula = formula
 
-    def predict(self, state: list[float]) -> Union[list[float], int]:
+    def predict(self, state: List[float]) -> Union[List[float], int]:
         """
         Returns the next action (either its index or a magnitude) based on the game state.
 
@@ -40,6 +42,16 @@ class AgentHelper:
             output = int(np.argmax(output))
 
         return output
+
+
+def _create_stats():
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
+
+    return stats
 
 
 class Agent:
@@ -62,32 +74,23 @@ class Agent:
         self.agent_helper = self._get_agent_helper
 
         self.toolbox = self._create_toolbox()
-        self.stats = self._create_stats()
+        self.stats = _create_stats()
 
     def _create_toolbox(self):
         toolbox = base.Toolbox()
-        self.toolbox.register("expr", gp.genHalfAndHalf, pset=self.pset, min_=2, max_=3)
-        self.toolbox.register("individual", tools.initIterate, creator.Individual, self.toolbox.expr)
-        self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        self.toolbox.register('evaluate', self._fitness)
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
-        self.toolbox.register("mate", gp.cxOnePoint)
-        self.toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
-        self.toolbox.register("mutate", gp.mutUniform, expr=self.toolbox.expr_mut, pset=self.pset)
+        toolbox.register("expr", gp.genHalfAndHalf, pset=self.pset, min_=2, max_=3)
+        toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+        toolbox.register('evaluate', self._fitness)
+        toolbox.register("select", tools.selTournament, tournsize=3)
+        toolbox.register("mate", gp.cxOnePoint)
+        toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
+        toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=self.pset)
 
-        self.toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
-        self.toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
+        toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
+        toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
 
         return toolbox
-
-    def _create_stats(self):
-        stats = tools.Statistics(lambda ind: ind.fitness.values)
-        self.stats.register("avg", np.mean, axis=0)
-        self.stats.register("std", np.std, axis=0)
-        self.stats.register("min", np.min, axis=0)
-        self.stats.register("max", np.max, axis=0)
-
-        return stats
 
     def _create_primitive_set(self, num_inputs, num_outputs):
         raise NotImplementedError
