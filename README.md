@@ -9,8 +9,9 @@ In this project we applied genetic programming to solve OpenAI Gym Environments 
 
 # Examples
 <p float="left">
-  <img src="https://user-images.githubusercontent.com/70323559/205954264-ef4c999c-1770-4277-98fb-5af888e5f0a0.gif" alt="mountain_car" width="400"/>
-  <img src="https://user-images.githubusercontent.com/70323559/205955271-b68d18e5-4def-42b2-82d9-51c0fb76e853.gif" alt="cart_pole" width="400"/>
+  <img src="https://user-images.githubusercontent.com/70323559/205954264-ef4c999c-1770-4277-98fb-5af888e5f0a0.gif" alt="mountain_car" height="250"/>
+  <img src="https://user-images.githubusercontent.com/70323559/205955271-b68d18e5-4def-42b2-82d9-51c0fb76e853.gif" alt="cart_pole" height="250"/>
+  <img src="https://user-images.githubusercontent.com/70323559/205971663-8e056a50-0044-4f7b-b7c1-dbec6ced8809.gif" alt="cart_pole" height="250"/>
 </p>
 
 # Explanations
