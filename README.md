@@ -1,4 +1,4 @@
-# YaES
+# Decision Genetic Programming
 
 In this project we applied genetic programming to solve OpenAI Gym Environments and compared its performance to RL
 models.
