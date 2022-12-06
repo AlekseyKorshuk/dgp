@@ -1,6 +1,6 @@
 import os
-from yaes.environment import Environment
-from yaes.train import Trainer
+from dgp.environment import Environment
+from dgp.train import Trainer
 import pandas as pd
 
 

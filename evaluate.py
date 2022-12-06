@@ -3,10 +3,10 @@ import random
 import gym
 from stable_baselines3 import PPO
 
-from yaes.agent import multi_tree, RLAgent
-from yaes.agent.modi import ModiAgent
-from yaes.environment import wrap_env
-from yaes.evaluate import Evaluator
+from dgp.agent import multi_tree, RLAgent
+from dgp.agent.modi import ModiAgent
+from dgp.environment import wrap_env
+from dgp.evaluate import Evaluator
 
 
 def set_seed(seed):

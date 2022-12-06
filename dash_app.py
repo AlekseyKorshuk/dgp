@@ -13,7 +13,7 @@ from os import listdir
 from os.path import isfile, join
 import dash_daq as daq
 from dash.exceptions import PreventUpdate
-from yaes.utils import train_dash
+from dgp.utils import train_dash
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 last_run_file = ".last_run"

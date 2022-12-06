@@ -1,4 +1,4 @@
-from yaes.environment import Environment
+from dgp.environment import Environment
 from deap import gp
 from deap import creator, base, tools, algorithms
 import operator

@@ -1,7 +1,7 @@
 import gym
 
-from yaes.environment.continuous import ContinuousEnvironment
-from yaes.environment.discrete import DiscreteEnvironment
+from dgp.environment.continuous import ContinuousEnvironment
+from dgp.environment.discrete import DiscreteEnvironment
 
 
 def wrap_env(env: gym.Env):

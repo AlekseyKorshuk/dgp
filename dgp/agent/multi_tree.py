@@ -1,6 +1,6 @@
 import uuid
 
-from yaes.environment import Environment
+from dgp.environment import Environment
 from deap import tools
 from .deap_primitives import basic_primitive_set
 from .base import Agent

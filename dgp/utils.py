@@ -3,10 +3,10 @@ import gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 
-from yaes.agent import RLAgent, multi_tree
-from yaes.agent.modi import ModiAgent
-from yaes.environment import wrap_env
-from yaes.evaluate import Evaluator
+from dgp.agent import RLAgent, multi_tree
+from dgp.agent.modi import ModiAgent
+from dgp.environment import wrap_env
+from dgp.evaluate import Evaluator
 
 
 def dump_results(stats, agent_names=None):

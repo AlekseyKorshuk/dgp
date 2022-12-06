@@ -1,6 +1,6 @@
 import numpy as np
 
-from yaes.environment import Environment
+from dgp.environment import Environment
 
 
 class ContinuousEnvironment(Environment):

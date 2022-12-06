@@ -4,7 +4,7 @@ import numpy as np
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-from yaes.environment import Environment
+from dgp.environment import Environment
 
 
 class RLAgent:

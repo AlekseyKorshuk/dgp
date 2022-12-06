@@ -1,6 +1,6 @@
 import dill
 import gym
-from yaes.environment import wrap_env
+from dgp.environment import wrap_env
 import sys
 
 
