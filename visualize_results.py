@@ -2,13 +2,12 @@ import dill
 import gym
 from yaes.environment import wrap_env
 import sys
-import gym_pygame
 
 
 def visualize_results(gym_name: str,
-                  path_to_best_agent: str = "best_agent.pkl",
-                  videos_dir: str = "agent_preview_copter",
-                  max_duration: int = 10):
+                      path_to_best_agent: str = "best_agent.pkl",
+                      videos_dir: str = "agent_preview_copter",
+                      max_duration: int = 10):
     """
     Render a play of the best agent.
 

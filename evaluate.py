@@ -18,14 +18,12 @@ def main():
     set_seed(0)
 
     gym_env = gym.make("CartPole-v1")
-
     env = wrap_env(gym_env)
-
     evaluator = Evaluator(env)
     rl_agent = RLAgent(env, PPO, "MlpPolicy", {"total_timesteps": int(15000), "progress_bar": True}, verbose=1)
     multi_tree_agent = multi_tree.MultiTreeAgent(env)
     modi_agent = ModiAgent(env)
-    agents = [multi_tree_agent, modi_agent, rl_agent]
+    agents = [rl_agent, multi_tree_agent, modi_agent]
     stats = evaluator.evaluate(agents)
     env.gym_env.metadata['render_fps'] = 1
 
@@ -36,7 +34,7 @@ def main():
         video_folder = f'./logs/monitor_stats_{agent_name}/video'
         gym_rec = gym.wrappers.RecordVideo(gym_env, video_folder)
         wrapped_env = wrap_env(gym_rec)
-        wrapped_env.play(agent, render=True, max_duration=20, sleep=0)
+        wrapped_env.play(agent, render=True, max_duration=120, sleep=1 / 30)
         print(f"Video for {agent_names} saved to {video_folder}")
     gym_env.close()
 

@@ -15,8 +15,9 @@ class ModiAgent(Agent):
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
 
     def _get_agent_helper(self, func):
+        formula = str(func)
         func = gp.compile(func, self.pset)
-        return super()._get_agent_helper(func)
+        return super()._get_agent_helper(func, formula=formula)
 
     def _create_primitive_set(self, num_inputs, num_outputs):
         random_uuid = uuid.uuid4().hex

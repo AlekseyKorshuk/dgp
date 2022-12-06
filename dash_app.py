@@ -4,6 +4,7 @@ import shutil
 import multiprocessing
 import time
 import dash
+import dill
 import pandas as pd
 from dash import dcc, html
 import plotly
@@ -15,7 +16,6 @@ from dash.exceptions import PreventUpdate
 from yaes.utils import train_dash
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-# external_stylesheets = []
 last_run_file = ".last_run"
 
 
@@ -34,10 +34,9 @@ app.layout = html.Div(
             "GYM Environment: ",
             dcc.Input(id='gym_name', value="CartPole-v1", type='text')
         ], style={'textAlign': 'center'}),
-        # new line
         html.Br(),
         html.Div([
-            "Library (optional): ",
+            "⠀Library (optional): ",
             dcc.Input(id='gym_lib', value="", type='text')
         ], style={'textAlign': 'center'}),
         daq.StopButton(
@@ -80,7 +79,7 @@ def train_callback(train_button, gym_name, gym_lib):
     context = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     if context == "train-button-state":
         global process
-        shutil.rmtree("logs")
+        shutil.rmtree("logs", ignore_errors=True)
         os.makedirs("logs", exist_ok=True)
         with open(last_run_file, "w") as f:
             f.write(gym_name + "\n" + gym_lib)
@@ -107,6 +106,9 @@ def update_metrics(n):
     return not finished or process is not None
 
 
+last_children = None
+
+
 @app.callback(Output('videos', 'children'),
               Input('interval-component', 'n_intervals'))
 def update_videos(n):
@@ -118,14 +120,26 @@ def update_videos(n):
     for d in dirs:
         if d.startswith("monitor_stats_"):
             agent_name = d.split("_")[-1]
+            child = [html.H5(agent_name)]
+            if os.path.exists(join(logs_path, d, "model.pkl")):
+                with open(join(logs_path, d, "model.pkl"), 'rb') as f:
+                    best_agent = dill.load(f, fix_imports=False, encoding="ASCII", errors="")
+                formula = best_agent.formula
+                if type(formula) == str:
+                    formula = [formula]
+                for f in formula:
+                    child.append(html.Div(f))
+                    child.append(html.Br())
             if os.path.exists(join(logs_path, d, "video/rl-video-episode-0.mp4")):
                 video_path = join(d, "video/rl-video-episode-0.mp4")
-                children.append(html.Div([
-                    html.H5(agent_name),
-                    html.Video(src=app.get_asset_url(video_path), controls=True)
-                ]))
-    if len(children) == 0:
+                child.append(
+                    html.Video(src=app.get_asset_url(video_path), controls=True, autoPlay=True, loop=True)
+                )
+            children.append(html.Div(child))
+    global last_children
+    if last_children == children:
         raise PreventUpdate
+    last_children = children
     return children
 
 
@@ -148,6 +162,9 @@ last_logs = tuple()
               Input('interval-component', 'n_intervals'))
 def update_graph_live(n):
     fig = plotly.tools.make_subplots(rows=1, cols=2, vertical_spacing=0.2)
+    # increase font size
+    fig['layout']['font']['size'] = 20
+
     fig['layout']['margin'] = {
         'l': 30, 'r': 10, 'b': 30, 't': 10
     }
@@ -179,10 +196,14 @@ def update_graph_live(n):
     fig['layout']['yaxis1']['title'] = "Reward"
     fig['layout']['yaxis2']['title'] = "Reward"
 
+    dashes = ["solid", "dashdot", "dot", "dash", "longdash", "longdashdot"]
+
     # get available colors
     colors = plotly.colors.DEFAULT_PLOTLY_COLORS
     for i, log in enumerate(logs):
         name = log[0]
+        if name == "RLAgent":
+            name = "PPOAgent"
         df = log[1]
         fig.append_trace({
             'x': df["t"],
@@ -190,8 +211,8 @@ def update_graph_live(n):
             'name': name,
             'mode': 'lines',
             'type': 'scatter',
-            'line': {'color': colors[i % len(colors)]},
-            # 'showlegend': True,
+            'line': {'color': colors[i % len(colors)], 'width': 4, 'dash': dashes[i % len(dashes)]},
+            'legendgroup': f'group{i}',
         }, 1, 1)
         # get color from the last trace
 
@@ -201,18 +222,22 @@ def update_graph_live(n):
             'name': name,
             'mode': 'lines',
             'type': 'scatter',
-            'line': {'color': colors[i % len(colors)]},
-            # 'showlegend': False,
+            'line': {'color': colors[i % len(colors)], 'width': 4, 'dash': dashes[i % len(dashes)]},
+            'showlegend': False,
+            'legendgroup': f'group{i}',
         }, 1, 2)
-
-    names = set()
-    fig.for_each_trace(
-        lambda trace:
-        trace.update(showlegend=False)
-        if (trace.name in names) else names.add(trace.name))
-
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.05,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal",
+        )
+    )
     return fig
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

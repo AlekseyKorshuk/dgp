@@ -1,5 +1,3 @@
-import time
-
 import dill
 import gym
 from stable_baselines3 import PPO
@@ -11,14 +9,17 @@ from yaes.environment import wrap_env
 from yaes.evaluate import Evaluator
 
 
-def dump_results(stats):
-    for i, stat in enumerate(stats):
+def dump_results(stats, agent_names=None):
+    if agent_names is None:
+        agent_names = [str(i) for i in range(len(stats))]
+    for stat, agent_name in zip(stats, agent_names):
         best_agent = stat.pop("best_agent")
         print(type(best_agent))
         if isinstance(best_agent, BaseAlgorithm):
-            best_agent.save(best_agent.__class__.__name__)
+            best_agent.save(f'./logs/monitor_stats_{agent_name}/model')
         else:
-            with open(f'{best_agent.__class__.__name__}.pkl', 'wb') as f:
+            with open(f'./logs/monitor_stats_{agent_name}/model.pkl',
+                      'wb') as f:
                 dill.dump(best_agent, f)
 
 
@@ -37,8 +38,8 @@ def train_dash(gym_name, gym_lib):
     stats = evaluator.evaluate(agents)
     best_agents = [stat["best_agent"] for stat in stats]
     agent_names = [agent.__class__.__name__ for agent in agents]
+    dump_results(stats, agent_names)
     record_video(best_agents, agent_names, gym_env)
-    dump_results(stats)
     del gym_env
     del env
     del evaluator

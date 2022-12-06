@@ -23,9 +23,10 @@ class MultiTreeAgent(Agent):
         return pset
 
     def _get_agent_helper(self, agent):
+        formula = [str(func) for func in agent]
         agent = tuple(map(lambda x: compile(x, self.pset), agent))
 
-        return super()._get_agent_helper(get_scores(agent))
+        return super()._get_agent_helper(get_scores(agent), formula=formula)
 
     def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=10):
         pops = [self.toolbox.population(n=n_pop) for _ in range(self.num_actions)]
@@ -98,7 +99,6 @@ def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose
 
         fitnesses = toolbox.map(toolbox.evaluate, zip(*invalid_ind))
         fitnesses = list(fitnesses)
-        print("multitree", len(fitnesses))
         for i in range(len(fitnesses)):
             for j in range(len(invalid_ind)):
                 invalid_ind[j][i].fitness.values = fitnesses[i]
