@@ -75,6 +75,7 @@ reason, we implemented modified individuals which return vector of outputs. For 
 and return the result as an action. In games with continuous actions we return the result unaltered.
 
 ### Modi
+[Source of idea](https://www.researchgate.net/publication/228824043_A_multiple-output_program_tree_structure_in_genetic_programming)
 
 Files with implementation:
 
@@ -89,9 +90,9 @@ Instead, we decided to separate these two functions. We add a special node calle
 to the parent without changes and adds this input to the output vector. This approach allowed us to simplify the
 implementation.
 
-[Source of idea](https://www.researchgate.net/publication/228824043_A_multiple-output_program_tree_structure_in_genetic_programming)
 
 ### Multi-Tree
+[Source of idea](https://github.com/DEAP/deap/issues/491)
 
 Files with implementation:
 
@@ -102,6 +103,6 @@ The idea is to create a bag of trees where each one is responsible for specific 
 with size N we have N populations. To obtain an action, we take i-th individual from each population, feed them the
 state of the game and collect outputs.
 
-[Source of idea](https://github.com/DEAP/deap/issues/491)
+
 
 
