@@ -10,11 +10,18 @@ from yaes.evaluate import Evaluator
 
 
 def set_seed(seed):
+    """
+    Sets the seed for the random number generators
+    :param seed: seed
+    """
     np.random.seed(seed)
     random.seed(seed)
 
 
 def main():
+    """
+    Main function
+    """
     set_seed(0)
 
     gym_env = gym.make("CartPole-v1")

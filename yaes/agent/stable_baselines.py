@@ -40,8 +40,8 @@ class RLAgent:
     def predict(self, state: np.ndarray) -> np.ndarray:
         """
         This function returns an action based on the current game state.
-        :param state:
-        :return:
+        :param state: current game state
+        :return: action
         """
         action, _state = self.agent.predict(state)
         return action

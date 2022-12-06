@@ -45,6 +45,9 @@ class AgentHelper:
 
 
 def _create_stats():
+    """
+    Creates a dictionary of statistics for the evolution process.
+    """
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
@@ -77,6 +80,11 @@ class Agent:
         self.stats = _create_stats()
 
     def _create_toolbox(self):
+        """
+        Creates a toolbox for the evolution process.
+
+        :return: toolbox.
+        """
         toolbox = base.Toolbox()
         toolbox.register("expr", gp.genHalfAndHalf, pset=self.pset, min_=2, max_=3)
         toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
@@ -93,15 +101,35 @@ class Agent:
         return toolbox
 
     def _create_primitive_set(self, num_inputs, num_outputs):
+        """
+        Creates a primitive set for the evolution process.
+
+        :param num_inputs: number of inputs.
+        :param num_outputs: number of outputs.
+        """
         raise NotImplementedError
 
-    def _get_agent_helper(self, func, formula=None):
+    def _get_agent_helper(self, func, formula=None) -> AgentHelper:
+        """
+        Returns an agent helper which will be used by OpenAI Gym.
+
+        :param func: function which accepts state as an input and returns a vector of outputs with scores for each
+                        action.
+        :param formula: formula which was used to generate the function.
+        :return: agent helper.
+        """
         if self.is_discrete:
             return AgentHelper(func, formula=formula)
         else:
             return AgentHelper(func, bounds=self.env.get_bounds(), is_continuous=True, formula=formula)
 
     def _fitness(self, agent):
+        """
+        Calculates the fitness of the agent.
+
+        :param agent: an agent.
+        :return: fitness.
+        """
         result = self.env.play(self.agent_helper(agent), render=False)
         reward, steps = result["reward"], result["steps"]
         return reward,  # , steps

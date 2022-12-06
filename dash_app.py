@@ -20,6 +20,10 @@ last_run_file = ".last_run"
 
 
 def get_last_run():
+    """
+    Returns the last run
+
+    """
     if os.path.isfile(last_run_file):
         with open(last_run_file, "r") as f:
             return f.read().split("\n")[:2]
@@ -64,6 +68,9 @@ process = None
 
 
 def train(gym_name, gym_lib):
+    """
+    Trains the agents
+    """
     global finished
     finished = False
     gym_lib = gym_lib if gym_lib != "" else None
@@ -76,6 +83,9 @@ def train(gym_name, gym_lib):
               State('gym_name', 'value'),
               State('gym_lib', 'value'), prevent_initial_callbacks=True)
 def train_callback(train_button, gym_name, gym_lib):
+    """
+    Callback for training
+    """
     context = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     if context == "train-button-state":
         global process
@@ -89,14 +99,20 @@ def train_callback(train_button, gym_name, gym_lib):
 
 @app.callback(Output('live-update-text', 'children'),
               Input('interval-component', 'n_intervals'))
-def update_metrics(n):
+def update_title(n):
+    """
+    Updates the title
+    """
     gym_env, gym_lib = get_last_run()
     return gym_env + (f" - {gym_lib}" if gym_lib != "" else "")
 
 
 @app.callback(Output('train-button-state', 'disabled'),
               Input('interval-component', 'n_intervals'))
-def update_metrics(n):
+def update_button(n):
+    """
+    Updates the button
+    """
     global finished, process
     if finished:
         if process is not None:
@@ -112,6 +128,9 @@ last_children = None
 @app.callback(Output('videos', 'children'),
               Input('interval-component', 'n_intervals'))
 def update_videos(n):
+    """
+    Updates the videos
+    """
     if not os.path.exists("logs"):
         raise PreventUpdate
     logs_path = os.path.abspath("logs")
@@ -144,6 +163,9 @@ def update_videos(n):
 
 
 def get_logs():
+    """
+    Returns the logs
+    """
     logs_path = "logs"
     dirs = [f for f in listdir(logs_path) if not isfile(join(logs_path, f))]
     logs = []
@@ -161,6 +183,9 @@ last_logs = tuple()
 @app.callback(Output('live-update-graph', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_graph_live(n):
+    """
+    Updates the graph
+    """
     fig = plotly.tools.make_subplots(rows=1, cols=2, vertical_spacing=0.2)
     # increase font size
     fig['layout']['font']['size'] = 20

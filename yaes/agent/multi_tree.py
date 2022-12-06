@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from yaes.environment import Environment
 from .deap_primitives import basic_primitive_set
-from .base import Agent
+from .base import Agent, AgentHelper
 from deap.gp import compile
 import numpy as np
 from deap import algorithms, creator, base, tools, gp
@@ -14,26 +14,48 @@ def get_scores(agent):
 
 
 class MultiTreeAgent(Agent):
-    """
-    This class contains declarations required for evolution of MultiTree individuals.
-    Also, it overwrites the default training loop because it uses another training strategy.
-    :param env: an OpenAI Gym environment.
-    """
+
     def __init__(self, env: Environment):
+        """
+        This class contains declarations required for evolution of MultiTree individuals.
+        Also, it overwrites the default training loop because it uses another training strategy.
+
+        :param env: an OpenAI Gym environment.
+        """
         super().__init__(env)
 
-    def _create_primitive_set(self, num_inputs, _):
+    def _create_primitive_set(self, num_inputs, _) -> base.PrimitiveSet:
+        """
+        Creates a primitive set for the given number of inputs and outputs.
+        :param num_inputs: number of inputs.
+        :param num_outputs: number of outputs.
+        :return: a primitive set.
+        """
         random_uuid = uuid.uuid4().hex
         pset = basic_primitive_set(num_inputs, random_uuid)
         return pset
 
-    def _get_agent_helper(self, agent):
+    def _get_agent_helper(self, agent) -> AgentHelper:
+        """
+        Returns an AgentHelper object for the given function.
+        :param agent: function to be used for prediction.
+        :return: an AgentHelper object.
+        """
         formula = [str(func) for func in agent]
         agent = tuple(map(lambda x: compile(x, self.pset), agent))
 
         return super()._get_agent_helper(get_scores(agent), formula=formula)
 
     def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=10):
+        """
+        Trains the agent using the given parameters.
+
+        :param n_pop: population size.
+        :param cxpb: crossover probability.
+        :param mutpb: mutation probability.
+        :param n_gens: number of generations.
+        :return: the best agent.
+        """
         pops = [self.toolbox.population(n=n_pop) for _ in range(self.num_actions)]
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 

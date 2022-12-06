@@ -8,10 +8,21 @@ import random
 
 
 def if_then_else(cond: bool, output1: Any, output2: Any):
+    """
+    If-then-else operator.
+    :param cond: condition.
+    :param output1: output if condition is true.
+    :param output2: output if condition is false.
+    """
     return output1 if cond else output2
 
 
 def safe_div(x1: float, x2: float, eps=1e-15):
+    """
+    Safe division.
+    :param x1: numerator.
+    :param x2: denominator.
+    """
     return 0 if x2 < eps else x1 / x2
 
 

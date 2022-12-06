@@ -10,6 +10,11 @@ from yaes.evaluate import Evaluator
 
 
 def dump_results(stats, agent_names=None):
+    """
+    Dumps the results of the evaluation to a file
+    :param stats: evaluation stats
+    :param agent_names: agent names
+    """
     if agent_names is None:
         agent_names = [str(i) for i in range(len(stats))]
     for stat, agent_name in zip(stats, agent_names):
@@ -24,6 +29,11 @@ def dump_results(stats, agent_names=None):
 
 
 def train_dash(gym_name, gym_lib):
+    """
+    Trains agents for dashboard
+    :param gym_name: gym name
+    :param gym_lib: gym library
+    """
     if gym_lib is not None:
         import importlib
         importlib.import_module(gym_lib)
@@ -50,6 +60,12 @@ def train_dash(gym_name, gym_lib):
 
 
 def record_video(agents, agent_names, gym_env):
+    """
+    Records video of the agents
+    :param agents: agents
+    :param agent_names: agent names
+    :param gym_env: gym environment
+    """
     gym_env.metadata['render_fps'] = 1
 
     for agent, agent_name in zip(agents, agent_names):

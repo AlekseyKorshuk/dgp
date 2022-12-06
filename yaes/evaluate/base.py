@@ -6,10 +6,24 @@ import pandas as pd
 
 class Evaluator:
     def __init__(self, env: Environment):
+        """
+        Evaluator class for evaluating agents
+
+        :param env: environment
+        """
         self.env = env
         self.env.reset()
 
     def evaluate(self, agents):
+        """
+        Evaluate agents
+
+        :param agents: list of agents
+        :return: statistics of the evaluation for each agent in the following format
+            - training_stats: statistics of the training
+            - eval_stats: statistics of the evaluation
+            - best_agent: best agent
+        """
         stats = []
         monitor_df_paths = []
         for agent_class in agents:
@@ -18,14 +32,12 @@ class Evaluator:
             monitor_df_paths.append(log_dir + "/monitor.csv")
             trainer = Trainer(self.env, agent_class, log_dir=log_dir)
             best_agent, training_stats, eval_stats = trainer.train()
-            # wait for file to be written
-            # shutil.rmtree(log_dir)
+
             stats.append(
                 {
                     "training_stats": training_stats,
                     "eval_stats": eval_stats,
                     "best_agent": best_agent,
-                    # "monitor_df": df
                 }
             )
         for i, path in enumerate(monitor_df_paths):
