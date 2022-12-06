@@ -1,5 +1,5 @@
-from yaes.environment import Environment
-from yaes.agent.stable_baselines import RLAgent
+from dgp.environment import Environment
+from dgp.agent.stable_baselines import RLAgent
 from stable_baselines3.common.monitor import Monitor
 
 
