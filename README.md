@@ -1,9 +1,23 @@
 # YaES
-The aim of this project is to apply genetic programming to solve OpenAI Gym Environments and to compare its performance to RL models.
+In this project we applied genetic programming to solve OpenAI Gym Environments and compared its performance to RL models.
 
-In most simple games the mapping from a state to an action can be expressed as closed-form function. It is a natural application of genetic programming and we leverage this technique to find the exact solution.
+# Quick Start
+* `git clone git@github.com:AlekseyKorshuk/YaES.git`
+* `cd YaES`
+* `pip install -r requirements.txt`
+* `python dash_app.py`
 
-## Single Action Games
+# Examples
+<p float="left">
+  <img src="https://user-images.githubusercontent.com/70323559/205954264-ef4c999c-1770-4277-98fb-5af888e5f0a0.gif" alt="mountain_car" width="400"/>
+  <img src="https://user-images.githubusercontent.com/70323559/205955271-b68d18e5-4def-42b2-82d9-51c0fb76e853.gif" alt="cart_pole" width="400"/>
+</p>
+
+# Explanations
+**Why even try?**
+In most simple games the mapping from a state to an action can be expressed as closed-form function. It is a natural application of genetic programming and we leverage this technique to find the exact formula.
+
+## Single Action Space
 Genetic Programming is naturally applicable here. A mathematical formula can be expressed as a tree where root is the result of calculations, internal nodes are operations and terminal nodes are either the input variables (state of the game in our case) or functions without variables such as constants and random number generators.
 
 ![image](https://user-images.githubusercontent.com/70323559/205684823-2c7acccd-88ed-4b20-978d-82051a9b15c9.png)
@@ -16,12 +30,10 @@ For binary actions (do or don't do) we make a decision by checking whether the o
 ### Fitness Function
 We obtain the fitness by taking the reward after running our agents in a Gym.
 
-## Mutliple Action Games
-Evolution of the usual tree doesn't scale to games with multiple outputs because it returns only single number. For that reason, we implemented several modifications.
+## Mutliple Action Space
+Evolution of the usual tree doesn't scale to games with multiple outputs because it returns only single number. For that reason, we implemented modified individuals which return vector of outputs. For discrete games we apply argmax function and return the result as an action. In games with continuous actions we return the result unaltered. 
 
 ### Modi
-[Source of idea](https://www.researchgate.net/publication/228824043_A_multiple-output_program_tree_structure_in_genetic_programming)
-
 Files with implementation:
 * `agent/base.py`
 * `agent/modi.py`
@@ -30,9 +42,12 @@ We implemented this idea with a slight modification. The authors of above mentio
 
 Instead, we decided to separate these two functions. We add a special node called 'modi{index}' which passes its input to the parent without changes and adds this input to the output vector. This approach allowed us to simplify the implementation.
 
+[Source of idea](https://www.researchgate.net/publication/228824043_A_multiple-output_program_tree_structure_in_genetic_programming)
 ### Multi-Tree
-[Source of idea](https://github.com/DEAP/deap/issues/491)
-
 Files with implementation:
 * `agent/base.py`
 * `agent/multi_tree.py`
+
+The idea is to create a bag of trees where each one is responsible for specific output index. Thus, for output vector with size N we have N populations. To obtain an action, we take i-th individual from each population, feed them the state of the game and collect outputs.
+
+[Source of idea](https://github.com/DEAP/deap/issues/491)
