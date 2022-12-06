@@ -24,7 +24,7 @@ class MultiTreeAgent(Agent):
         """
         super().__init__(env)
 
-    def _create_primitive_set(self, num_inputs, _) -> base.PrimitiveSet:
+    def _create_primitive_set(self, num_inputs, _):
         """
         Creates a primitive set for the given number of inputs and outputs.
         :param num_inputs: number of inputs.
