@@ -23,11 +23,12 @@ class MultiTreeAgent(Agent):
         return pset
 
     def _get_agent_helper(self, agent):
+        formula = [str(func) for func in agent]
         agent = tuple(map(lambda x: compile(x, self.pset), agent))
 
-        return super()._get_agent_helper(get_scores(agent))
+        return super()._get_agent_helper(get_scores(agent), formula=formula)
 
-    def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=3):
+    def train(self, n_pop=30, cxpb=0.9, mutpb=0.5, n_gens=10):
         pops = [self.toolbox.population(n=n_pop) for _ in range(self.num_actions)]
         hofs = [tools.HallOfFame(1) for _ in range(self.num_actions)]
 
@@ -35,11 +36,10 @@ class MultiTreeAgent(Agent):
 
         try:
             for _ in range(n_gens):
-                pops, log = Evolve(pops, self.toolbox, 0.9, 0.5, 1,
+                pops, log = Evolve(pops, self.toolbox, cxpb, mutpb, 1,
                                    halloffame=hofs,
                                    verbose=True, stats=self.stats)
-
-                fitnesses = self.toolbox.map(self.toolbox.evaluate, zip(*pops))
+                fitnesses = self.toolbox.map(lambda x: x[0].fitness.values[0], zip(*pops))
                 min_fitness_index = np.argmin(fitnesses)
                 for i in range(len(pops)):
                     pops[i][min_fitness_index] = hofs[i][0]
@@ -55,7 +55,6 @@ class MultiTreeAgent(Agent):
         return self.agent_helper(individual), training_stats
 
 
-# Re-write the eaSimple() function to evolve the 4 individuals w.r.t to the cost returned by the python function: cost_function
 def Evolve(pop, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=__debug__):
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])

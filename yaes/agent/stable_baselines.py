@@ -20,6 +20,7 @@ class RLAgent:
         self.env.gym_env = Monitor(self.env.gym_env, log_dir)
         self.agent = self.agent_class(self.policy, self.env.gym_env, verbose=self.verbose, learning_rate=1e-3)
         self.agent.learn(**self.train_args)
+        self.env.gym_env = self.env.gym_env.env
         return self.agent
 
     def predict(self, state):

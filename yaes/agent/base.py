@@ -6,20 +6,19 @@ import numpy as np
 
 
 class AgentHelper:
-    def __init__(self, func, bounds=None, is_continuous=False):
+    def __init__(self, func, bounds=None, is_continuous=False, formula=None):
         self.func = func
         self.bounds = bounds
         self.is_continuous = is_continuous
+        self.formula = formula
 
     def predict(self, state):
         state = list(map(float, state))
         output = self.func(*state)
-
         if self.is_continuous and self.bounds is not None:
             output = np.clip(output, *self.bounds).tolist()
         else:
             output = int(np.argmax(output))
-
         return output
 
 
@@ -59,11 +58,11 @@ class Agent:
     def _create_primitive_set(self, num_inputs, num_outputs):
         raise NotImplementedError
 
-    def _get_agent_helper(self, func):
+    def _get_agent_helper(self, func, formula=None):
         if self.is_discrete:
-            return AgentHelper(func)
+            return AgentHelper(func, formula=formula)
         else:
-            return AgentHelper(func, bounds=self.env.get_bounds(), is_continuous=True)
+            return AgentHelper(func, bounds=self.env.get_bounds(), is_continuous=True, formula=formula)
 
     def _fitness(self, agent):
         result = self.env.play(self.agent_helper(agent), render=False)
@@ -77,9 +76,9 @@ class Agent:
         try:
             for _ in range(n_gens):
                 pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb, mutpb, ngen=1, stats=self.stats,
-                                       halloffame=hof, verbose=True)
+                                               halloffame=hof, verbose=True)
 
-                min_fitness_index = np.argmin(list(map(self._fitness, pop)))
+                min_fitness_index = np.argmin(list(map(lambda x: x.fitness.values[0], pop)))
                 pop[min_fitness_index] = hof[0]
         except KeyboardInterrupt:
             pass
@@ -87,4 +86,5 @@ class Agent:
             training_stats = {
                 "log": log,
             }
+            print(hof[0])
             return self.agent_helper(hof[0]), training_stats

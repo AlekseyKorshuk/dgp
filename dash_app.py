@@ -3,8 +3,8 @@ import os
 import shutil
 import multiprocessing
 import time
-
 import dash
+import dill
 import pandas as pd
 from dash import dcc, html
 import plotly
@@ -13,24 +13,30 @@ from os import listdir
 from os.path import isfile, join
 import dash_daq as daq
 from dash.exceptions import PreventUpdate
-
 from yaes.utils import train_dash
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-# external_stylesheets = []
+last_run_file = ".last_run"
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+def get_last_run():
+    if os.path.isfile(last_run_file):
+        with open(last_run_file, "r") as f:
+            return f.read().split("\n")[:2]
+    return 'CartPole-v1', ''
+
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, assets_folder="logs")
 app.layout = html.Div(
     html.Div([
         html.H4('Evaluation', style={'textAlign': 'center'}),
         html.Div([
             "GYM Environment: ",
-            dcc.Input(id='gym_name', value='CartPole-v1', type='text')
+            dcc.Input(id='gym_name', value="CartPole-v1", type='text')
         ], style={'textAlign': 'center'}),
-        # new line
         html.Br(),
         html.Div([
-            "Library (optional): ",
+            "⠀Library (optional): ",
             dcc.Input(id='gym_lib', value="", type='text')
         ], style={'textAlign': 'center'}),
         daq.StopButton(
@@ -40,8 +46,10 @@ app.layout = html.Div(
             n_clicks=0,
             label=" "
         ),
-        html.Div(id='live-update-text'),
+        html.H5(id='live-update-text', style={'textAlign': 'center'}),
         dcc.Graph(id='live-update-graph'),
+        html.Div([
+        ], style={'textAlign': 'center'}, id="videos"),
         dcc.Interval(
             id='interval-component',
             interval=1 * 1000,  # in milliseconds
@@ -69,17 +77,23 @@ def train(gym_name, gym_lib):
               State('gym_lib', 'value'), prevent_initial_callbacks=True)
 def train_callback(train_button, gym_name, gym_lib):
     context = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
-    print("context", context)
     if context == "train-button-state":
         global process
-        shutil.rmtree("logs")
+        shutil.rmtree("logs", ignore_errors=True)
         os.makedirs("logs", exist_ok=True)
-        # start in a new thread
+        with open(last_run_file, "w") as f:
+            f.write(gym_name + "\n" + gym_lib)
         process = multiprocessing.Process(target=train, args=(gym_name, gym_lib)).start()
     return ""
 
 
-#
+@app.callback(Output('live-update-text', 'children'),
+              Input('interval-component', 'n_intervals'))
+def update_metrics(n):
+    gym_env, gym_lib = get_last_run()
+    return gym_env + (f" - {gym_lib}" if gym_lib != "" else "")
+
+
 @app.callback(Output('train-button-state', 'disabled'),
               Input('interval-component', 'n_intervals'))
 def update_metrics(n):
@@ -89,8 +103,44 @@ def update_metrics(n):
             process.terminate()
             process.join()
         return False
-    print(not finished or process is not None)
     return not finished or process is not None
+
+
+last_children = None
+
+
+@app.callback(Output('videos', 'children'),
+              Input('interval-component', 'n_intervals'))
+def update_videos(n):
+    if not os.path.exists("logs"):
+        raise PreventUpdate
+    logs_path = os.path.abspath("logs")
+    dirs = [f for f in listdir(logs_path) if not isfile(join(logs_path, f))]
+    children = []
+    for d in dirs:
+        if d.startswith("monitor_stats_"):
+            agent_name = d.split("_")[-1]
+            child = [html.H5(agent_name)]
+            if os.path.exists(join(logs_path, d, "model.pkl")):
+                with open(join(logs_path, d, "model.pkl"), 'rb') as f:
+                    best_agent = dill.load(f, fix_imports=False, encoding="ASCII", errors="")
+                formula = best_agent.formula
+                if type(formula) == str:
+                    formula = [formula]
+                for f in formula:
+                    child.append(html.Div(f))
+                    child.append(html.Br())
+            if os.path.exists(join(logs_path, d, "video/rl-video-episode-0.mp4")):
+                video_path = join(d, "video/rl-video-episode-0.mp4")
+                child.append(
+                    html.Video(src=app.get_asset_url(video_path), controls=True, autoPlay=True, loop=True)
+                )
+            children.append(html.Div(child))
+    global last_children
+    if last_children == children:
+        raise PreventUpdate
+    last_children = children
+    return children
 
 
 def get_logs():
@@ -108,21 +158,25 @@ def get_logs():
 last_logs = tuple()
 
 
-# Multiple components can update everytime interval gets fired.
 @app.callback(Output('live-update-graph', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_graph_live(n):
-    logs = get_logs()
     fig = plotly.tools.make_subplots(rows=1, cols=2, vertical_spacing=0.2)
+    # increase font size
+    fig['layout']['font']['size'] = 20
+
     fig['layout']['margin'] = {
         'l': 30, 'r': 10, 'b': 30, 't': 10
     }
+    if not os.path.exists("logs"):
+        raise PreventUpdate
+    logs = get_logs()
     # fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
     global last_logs
     current_logs = tuple([len(l[1]) for l in logs])
-    print("current logs", current_logs)
-    print("last logs", last_logs)
-    if current_logs == last_logs and dash.callback_context.triggered[0]['prop_id'].split('.')[0] == "interval-component":
+
+    if current_logs == last_logs and dash.callback_context.triggered[0]['prop_id'].split('.')[
+        0] == "interval-component":
         raise PreventUpdate
     else:
         last_logs = current_logs
@@ -142,21 +196,23 @@ def update_graph_live(n):
     fig['layout']['yaxis1']['title'] = "Reward"
     fig['layout']['yaxis2']['title'] = "Reward"
 
+    dashes = ["solid", "dashdot", "dot", "dash", "longdash", "longdashdot"]
+
     # get available colors
     colors = plotly.colors.DEFAULT_PLOTLY_COLORS
     for i, log in enumerate(logs):
         name = log[0]
+        if name == "RLAgent":
+            name = "PPOAgent"
         df = log[1]
-        # set x name
-
         fig.append_trace({
             'x': df["t"],
             'y': df["r"].cummax(),
             'name': name,
             'mode': 'lines',
             'type': 'scatter',
-            'line': {'color': colors[i % len(colors)]},
-            # 'showlegend': True,
+            'line': {'color': colors[i % len(colors)], 'width': 4, 'dash': dashes[i % len(dashes)]},
+            'legendgroup': f'group{i}',
         }, 1, 1)
         # get color from the last trace
 
@@ -166,16 +222,20 @@ def update_graph_live(n):
             'name': name,
             'mode': 'lines',
             'type': 'scatter',
-            'line': {'color': colors[i % len(colors)]},
-            # 'showlegend': False,
+            'line': {'color': colors[i % len(colors)], 'width': 4, 'dash': dashes[i % len(dashes)]},
+            'showlegend': False,
+            'legendgroup': f'group{i}',
         }, 1, 2)
-
-    names = set()
-    fig.for_each_trace(
-        lambda trace:
-        trace.update(showlegend=False)
-        if (trace.name in names) else names.add(trace.name))
-
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.05,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal",
+        )
+    )
     return fig
 
 
