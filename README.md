@@ -5,7 +5,7 @@ models.
 
 # Paper
 
-The paper with the complete evaluations, results and limitations of this project can be found [here]().
+The paper with the complete evaluations, results and limitations of this project can be found [here](./paper.pdf).
 
 # Quick Start
 
